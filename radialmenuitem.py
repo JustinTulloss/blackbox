@@ -1,0 +1,147 @@
+#!/usr/bin/python
+#
+#
+#Justin Tulloss
+#
+#
+
+import gtk
+from gtk import gdk
+import cairo
+import math
+
+class RadItem(gtk.DrawingArea):
+
+    _normalBG = (0,44/255,1)
+    _downBG = (2,102/255,0)
+    _overBG = (165/255,1,0)
+
+    def __init__(self, text=""):
+        super(RadItem, self).__init__()
+
+        #hook up all necessary events
+        self.connect("expose_event", self.expose)
+        self.connect("enter_notify_event", self.enter_notify)
+        self.connect("leave_notify_event", self.leave_notify)
+        self.connect("button_press_event", self.button_press)
+        self.connect("button_release_event", self.button_release)
+
+        #unmask necessary events
+        self.add_events(gdk.BUTTON_PRESS_MASK |
+                        gdk.BUTTON_RELEASE_MASK |
+                        gdk.ENTER_NOTIFY_MASK |
+                        gdk.LEAVE_NOTIFY_MASK)
+        self._text = text
+
+        self._activeBG = self._normalBG
+
+
+    #####EVENT HANDLERS####
+    def expose(self, widget, event):
+        context = widget.window.cairo_create() #CAIRO!!
+
+        #clip so we're not constanly redrawing everything
+        context.rectangle(event.area.x, event.area.y, \
+            event.area.width, event.area.height)
+
+        self.draw(context)
+
+        return False #keep this event coming
+
+    def button_press(self, widget, event):
+        self._oldBG = self._activeBG
+        self._activeBG = self._downBG
+        self.redraw()
+        return False
+
+    def button_release(self, widget, event):
+        self._activeBG = self._oldBG
+        self.redraw()
+
+    def enter_notify(self, widget, event):
+        self._activeBG = self._overBG
+        self.redraw()
+    
+    def leave_notify(self, widget, event):
+        self._activeBG = self._normalBG
+        self.redraw()
+
+    ####END EVENT HANDLERS#######
+
+    def redraw(self):
+        if self.window:
+            alloc = self.get_allocation()
+            self.queue_draw_area(alloc.x, alloc.y, alloc.width, alloc.height)
+            self.window.process_updates(True)
+
+    def draw(self, context):
+        context.clip()
+
+        rect = self.get_allocation() #how big are we?
+        self._centerX = rect.x + rect.width/2
+        self._centerY = rect.y + rect.height/2
+
+        #set up a transform
+        #make sure we're always in the middle
+        #sets us up to have a 1.0x1.0 surface
+        context.scale(min(rect.width,rect.height),min(rect.width,rect.height))
+        #context.scale(rect.width,rect.height)
+
+        self._radius = .5
+
+        #draw the circle and background
+        self.draw_circle(context)
+        #put the title in the appropriate place, size, whatever
+        self.draw_text(context)
+        #draw glassiness
+        self.draw_effect(context)
+
+    def draw_circle(self, cr):
+        cr.set_line_width(.01)
+        bgcolor = self._activeBG
+
+        bgGrad = cairo.LinearGradient(.5, 0, .5, 1)
+        bgGrad.add_color_stop_rgba(1, 1, 1, 1, .5)
+        bgGrad.add_color_stop_rgba(0, bgcolor[0] , bgcolor[1], bgcolor[2], .8)
+
+        cr.arc(.5, .5, self._radius, 0, 2*math.pi)
+        cr.set_source(bgGrad)
+        cr.fill_preserve()
+
+        cr.set_source_rgba(0, 0, 0, 1)
+        cr.stroke()
+
+    def draw_text(self, cr):
+        cr.set_source_rgba(0, 0, 0, .5) #font color
+        x, y, width, height = cr.text_extents(self._text)[:4]
+
+        #TODO: Make font size dynamic
+        cr.set_font_size(.2) #Font size
+        x, y, width, height = cr.text_extents(self._text)[:4]
+        cr.move_to(.5-width/2-x, .5-height/2-y)
+        cr.show_text(self._text)
+
+    def draw_effect(self, cr):
+        grad = cairo.LinearGradient(.5, 0, .5, 1)
+        grad.add_color_stop_rgba(0, 1, 1, 1, .85)
+        grad.add_color_stop_rgba(1, 1, 1, 1, 0)
+
+        cr.save() #save off old context
+        cr.translate(.5-.33,.01)
+        cr.scale(.66, .4)
+        cr.arc(.5, .5, self._radius, 0, 2*math.pi)
+        cr.set_source(grad)
+        cr.fill()
+        cr.restore() #restore old context
+
+if __name__ == "__main__":
+    mainWin = gtk.Window()
+    mainWin.connect("destroy", gtk.main_quit)
+    
+    #Tests for above class
+    trial = RadItem("Trial")
+
+    mainWin.add(trial)
+    mainWin.show_all()
+
+    gtk.main() #main loop
