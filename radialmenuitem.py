@@ -105,8 +105,8 @@ class RadItem(gtk.DrawingArea):
         bgcolor = self._activeBG
 
         #Create background gradient from the center top to the center bottom
-        bgGrad = cairo.LinearGradient(x0=.5, y0=0, x1=.5, x2=1)
-        bgGrad.add_color_stop_rgba(offset=1, red=1, green=1, blue=1, alpha=.5)
+        bgGrad = cairo.LinearGradient(.5, 0, .5, 1) # x0,y0,x1, y1
+        bgGrad.add_color_stop_rgba(1, 1, 1, 1, .5) # offset, color, alpha
         bgGrad.add_color_stop_rgba(0, bgcolor[0] , bgcolor[1], bgcolor[2], .8)
 
         #actually draw the circle (center x, center y, radius, degrees)
