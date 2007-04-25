@@ -10,50 +10,40 @@ import radialmenuitem
 
 menu_items = []
 module_order = [1, 6, 3, 4, 0, 2, 5, 7] #The order modules are revealed
-morder = (	[5,1,6],
-			[3,0,4],
-			[7,2,8])
-sel_item = 0
+sel_item = 3 #middle
 xwaiting, ywaiting = 0, 0
 
 def acc_handler(widget, x, y, z):
 	global sel_item, ywaiting, xwaiting
-	if sel_item in morder[0]:
-		i=0
-	elif sel_item in morder[1]:
-		i=1
-	elif sel_item in morder[2]:
-		i=2
-
-	j=morder[i].index(sel_item)
 
 	if x < 100:
-		if xwaiting == 0 and sel_item != morder[i][0]:
-			menu_items[sel_item-1].deselect()
-			sel_item = morder[i][j-1]
+		if xwaiting == 0 and sel_item %3==0: #isn't waiting or left edge
+			menu_items[sel_item].deselect()
+			sel_item = sel_item-1
 			xwaiting=1
 	elif x > 200:
-		if xwaiting == 0  and sel_item != morder[i][2]:
-			menu_items[sel_item-1].deselect()
-			sel_item = morder[i][j+1]
+		if xwaiting == 0  and sel_item %3 == 1: #isn't waiting or right edge
+			menu_items[sel_item].deselect()
+			sel_item = sel_item+1
 			xwaiting=1
 	elif xwaiting == 1:
 		xwaiting = 0
 	
-	if y < 50:
-		if ywaiting == 0 and sel_item != morder[0][j]:
-			menu_items[sel_item-1].deselect()
-			sel_item = morder[i][j]
+	if y < 100:
+		if ywaiting == 0 and sel_item >2:
+			menu_items[sel_item].deselect()
+			sel_item = sel_item-3
 			ywaiting = 1
-	elif y > 250:
-		if ywaiting == 0 and sel_item != morder[2][j]:
-			menu_items[sel_item-1].deselect()
-			sel_item = morder[i+1][j]
+	elif y > 200:
+		print "Move up"
+		if ywaiting == 0 and sel_item <6:
+			menu_items[sel_item].deselect()
+			sel_item = sel_item+3
 			ywaiting = 1
 	elif ywaiting == 1:
 		ywaiting = 0
 
-	menu_items[sel_item-1].select()
+	menu_items[sel_item].select()
 
 def create_module_view():
 	table = gtk.Table(3, 3, True)

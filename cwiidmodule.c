@@ -58,7 +58,7 @@ initcwiidmodule(void)
     id = 0;
 
     //Open the cwiid library
-    dlopen("libcwiid.so", RTLD_LAZY);
+    dlopen("./libcwiid.so", RTLD_LAZY);
 
     //Construct our class
     moduleDict = PyModule_GetDict(m);
