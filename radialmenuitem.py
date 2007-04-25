@@ -71,13 +71,22 @@ class RadItem(gtk.DrawingArea):
     def leave_notify(self, widget, event):
         self._activeBG = self._normalBG
         self.redraw()
+	
+    def select(self): #ghetto event handler
+        self._activeBG = self._overBG
+        self.redraw()
+    
+    def deselect(self): #ghetto event handler
+        self._activeBG = self._normalBG
+        self.redraw()
 
     ####END EVENT HANDLERS#######
 
     def redraw(self):
         if self.window:
             alloc = self.get_allocation()
-            self.queue_draw_area(alloc.x, alloc.y, alloc.width, alloc.height)
+            #self.queue_draw_area(alloc.x, alloc.y, alloc.width, alloc.height)
+            self.queue_draw()
             self.window.process_updates(True)
 
     def draw(self, context):
