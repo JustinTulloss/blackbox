@@ -39,6 +39,8 @@ class RadItem(gtk.DrawingArea):
 
         self._activeBG = self._normalBG
 
+    def set_text(self, text):
+		self._text = text
 
     #####EVENT HANDLERS####
     def expose(self, widget, event):
