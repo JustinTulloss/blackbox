@@ -9,14 +9,37 @@ import gtkwiid
 import radialmenuitem
 
 menu_items = []
-module_order = [1, 6, 3, 4, 0, 2, 5, 7] #The order modules are revealed
-sel_item = 3 #middle
+module_order = [1, 7, 0, 2, 6, 8, 3, 5] #The order modules are revealed
+sel_item = -1 #currently selected item
 xwaiting, ywaiting = 0, 0
 
 def acc_handler(widget, x, y, z):
 	global sel_item, ywaiting, xwaiting
+	print "%d %d %d" % (x,y,z)
 
-	if x < 100:
+	if x<120:
+		col = 0
+	elif x<150:
+		col = 1
+	else:
+		col = 2
+
+	if y<124:
+		row = 0
+	elif y<134:
+		row = 1
+		col = 1
+		if x>=150:
+			row = 0
+			col = 2
+		elif x<120:
+			row = 2
+			col = 0
+	else:
+		row = 2
+
+	new_sel_item = row*3 + col
+	"""if x < 100:
 		if xwaiting == 0 and sel_item %3==0: #isn't waiting or left edge
 			menu_items[sel_item].deselect()
 			sel_item = sel_item-1
@@ -42,8 +65,11 @@ def acc_handler(widget, x, y, z):
 			ywaiting = 1
 	elif ywaiting == 1:
 		ywaiting = 0
-
-	menu_items[sel_item].select()
+	"""
+	if sel_item != new_sel_item:	
+		menu_items[sel_item].deselect()
+		menu_items[new_sel_item].select()
+		sel_item = new_sel_item
 
 def create_module_view():
 	table = gtk.Table(3, 3, True)
@@ -65,6 +91,7 @@ def create_module_view():
 			table.attach(menu_item, col, col+1, row, row+1, flags, flags, 5, 5)
 		else: #Middle spot
 			menu_item = radialmenuitem.RadItem()
+			menu_items.append(menu_item)
 			table.attach(menu_item, col, col+1, row, row+1, flags, flags, 30,30)
 			menu_item.show()
 			
@@ -73,7 +100,8 @@ def create_module_view():
 
 def set_module_options(table, option_list):
 	for i in range(0, 8):
-		menu_items[i].hide()
+		if(i!=4):
+			menu_items[i].hide()
 
 	for i in range(0, len(option_list)):
 		menu_items[module_order[i]].set_text(option_list[i])
@@ -84,7 +112,7 @@ def test():
 	main_win.connect("destroy", gtk.main_quit)
 
 	module_view = create_module_view()
-	set_module_options(module_view, ["1", "2", "3", "4", "5", "6", "7", "8"])
+	set_module_options(module_view, ["1", "2", "3", "4", "5", "6"])
 
 	main_win.add(module_view)
 	module_view.show()
