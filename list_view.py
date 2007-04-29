@@ -2,22 +2,16 @@ import gtk
 
 (SONG_COL, ARTIST_COL, ALBUM_COL)= range(3)
 
-class list_view(gtk.HBox):
+class list_view(gtk.ScrolledWindow):
 	def __init__(self):
-		gtk.HBox.__init__(self)
-		self.pack_start(gtk.Label("asdf"))
+		gtk.ScrolledWindow.__init__(self)
+		self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 		
-		self.scroll_bar = gtk.VScrollbar()
-		self.pack_start(self.scroll_bar, False, True)
-
 		self.model = gtk.ListStore(str, str, str)
-		iter = self.model.insert_before(None, None)
-		self.model.set_value(iter, SONG_COL, "MX Missiles")
-		self.model.set_value(iter, ARTIST_COL, "Andrew Bird")
-		self.model.set_value(iter, ALBUM_COL, "The Mysterious Production of Eggs")
+		populate_model(self.model)
 
 		self.view = gtk.TreeView(self.model)
-		self.view.set_headers_visible(False)
+		#self.view.set_headers_visible(False)
 		renderer = gtk.CellRendererText()
 		column = gtk.TreeViewColumn("Song", renderer, text=SONG_COL)
 		self.view.append_column(column)
@@ -25,8 +19,21 @@ class list_view(gtk.HBox):
 		self.view.append_column(column)
 		column = gtk.TreeViewColumn("Album", renderer, text=ALBUM_COL)
 		self.view.append_column(column)
-		self.pack_start(self.view)
 
+		self.add(self.view)
+
+
+list_data = [("MX Missiles", "Andrew Bird", "The Myterious Production of Eggs"),
+			("Come Together", "The Beatles", "Abbey Road"),
+			("Black Dog", "Led Zeppelin", "IV")] * 10
+
+def populate_model(model):
+	for (song, artist, album) in list_data:
+		iter = model.insert_before(None, None)
+		model.set_value(iter, SONG_COL, song)
+		model.set_value(iter, ARTIST_COL, artist)
+		model.set_value(iter, ALBUM_COL, album)
+	
 
 def test():
 	main_win = gtk.Window()
