@@ -1,5 +1,8 @@
 import gtk
-import radialmenuitem
+import list_view
+import play_queue
+
+main_list = list_view.list_view()
 
 def destroy(src, data=None):
 	gtk.main_quit()
@@ -8,6 +11,10 @@ def destroy(src, data=None):
 def quit_on_q(src, data=None):
 	if(data.keyval == 113): #113 is ascii code for q, don't ask
 		destroy(src)
+	if(data.keyval == 100):
+		main_list.change_selection(1)
+	if(data.keyval == 117):
+		main_list.change_selection(-1)
 
 def main():
 	main_win = gtk.Window()
@@ -23,14 +30,13 @@ def main():
 	now_playing = gtk.Label("Now Playing: LCD Soundsystem")
 	main_table.attach(now_playing, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
 
-	rad = radialmenuitem.RadItem("Test")
-	main_table.attach(rad, 1, 2, 0, 1)
+	#main_list = list_view.list_view()
+	main_table.attach(main_list, 1, 2, 0, 1)
 
-	#For the play queue, im going to use a vbox to get the header on top of
-	#the song list, and then the song list itself will be a vbox
-	play_queue = gtk.VBox()
-	main_table.attach(play_queue, 0, 1, 0, 1, 0, gtk.FILL)
+	iplay_queue = play_queue.play_queue()
+	main_table.attach(iplay_queue, 0, 1, 0, 1, 0, gtk.FILL)
 	
+	"""
 	queue_header = gtk.Label("Play Queue")
 	play_queue.pack_start(queue_header, False)
 	song_list = gtk.VBox()
@@ -38,11 +44,12 @@ def main():
 
 	song_list.pack_end(gtk.Label("Next song"), False)
 	song_list.pack_end(gtk.Label("Song before that"), False)
-
+	"""
 	#Display window
 	main_win.fullscreen()
 	main_win.set_decorated(0)
 	main_win.show_all()
+	main_list.grab_focus()
 
 	gtk.main()
 

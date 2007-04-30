@@ -20,12 +20,28 @@ class list_view(gtk.ScrolledWindow):
 		column = gtk.TreeViewColumn("Album", renderer, text=ALBUM_COL)
 		self.view.append_column(column)
 
+		self.view.set_enable_search(False)
+
 		self.add(self.view)
+	
+	def grab_focus(self):
+		self.view.grab_focus()
+
+	#moves the selection by amount
+	def change_selection(self, amount):
+		((path,), col) = self.view.get_cursor()
+		path += amount
+		path = max(0, path)
+		rows = self.model.iter_n_children(None)
+		path = min(rows-1, path)
+
+		self.view.set_cursor((path))
+
 
 
 list_data = [("MX Missiles", "Andrew Bird", "The Myterious Production of Eggs"),
 			("Come Together", "The Beatles", "Abbey Road"),
-			("Black Dog", "Led Zeppelin", "IV")] * 10
+			("Black Dog", "Led Zeppelin", "IV")] * 30
 
 def populate_model(model):
 	for (song, artist, album) in list_data:
