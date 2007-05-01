@@ -2,7 +2,7 @@ import gtk
 import list_view
 import play_queue
 
-main_list = list_view.list_view()
+main_list = list_view.list_view(list_view.g_song_data)
 
 def destroy(src, data=None):
 	gtk.main_quit()
@@ -11,10 +11,12 @@ def destroy(src, data=None):
 def quit_on_q(src, data=None):
 	if(data.keyval == 113): #113 is ascii code for q, don't ask
 		destroy(src)
-	if(data.keyval == 100):
+	elif(data.keyval == 100): #d
 		main_list.change_selection(1)
-	if(data.keyval == 117):
+	elif(data.keyval == 117): #u
 		main_list.change_selection(-1)
+	elif(data.keyval == 115): #s selects
+		main_list.make_selection()
 
 def main():
 	main_win = gtk.Window()
