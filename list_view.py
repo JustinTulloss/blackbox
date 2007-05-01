@@ -2,14 +2,21 @@
 #	but different artists
 
 import gtk
-#from Set import set
+import breadcrumb
 
 (TITLE_COL, ARTIST_COL, ALBUM_COL, PATH_COL)= range(4)
 
-class list_view(gtk.ScrolledWindow):
+class list_view(gtk.VBox):
 	def __init__(self, song_data):
-		gtk.ScrolledWindow.__init__(self)
-		self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+		gtk.VBox.__init__(self)
+		#gtk.ScrolledWindow.__init__(self)
+		#self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+		self.bread_crumb = breadcrumb.bread_crumb()
+		self.pack_start(self.bread_crumb, False, True)
+		
+		self.scrolled_window = gtk.ScrolledWindow()
+		self.scrolled_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+		self.pack_start(self.scrolled_window)
 		
 		"""
 		self.model = gtk.ListStore(str, str, str, str)
@@ -36,7 +43,7 @@ class list_view(gtk.ScrolledWindow):
 		self.album_view = None
 		self.song_view = None
 
-		self.add(self.artist_view)
+		self.scrolled_window.add(self.artist_view)
 	
 	"""
 	def create_artist_view(self, song_data):
@@ -117,24 +124,47 @@ class list_view(gtk.ScrolledWindow):
 			new_data = [x for x in self.song_data if x["artist"]==val]
 			self.album_view = self.create_view(new_data, "album", "Albums")
 			self.set_current_view(self.album_view)
+
+			self.bread_crumb.set_artist(val)
 		elif(view == self.album_view): #Goto song view
 			new_data = [x for x in self.song_data if x["album"]==val]
 			self.song_view = self.create_view(new_data, "title", "Songs")
 			self.set_current_view(self.song_view)
+
+			self.bread_crumb.set_album(val)
 		elif(view == self.song_view): #Play song
 			songs = [x for x in self.song_data if x["title"]==val]
 			song = songs[0]
 			print "Song "+song["title"]+" selected"
 
 	def set_current_view(self, new_view):
-		self.remove(self.current_view)
+		self.scrolled_window.remove(self.current_view)
 		
 		self.current_view = new_view
-		self.add(self.current_view)
+		self.scrolled_window.add(self.current_view)
 		self.current_view.show()
 		self.current_view.grab_focus()
 
+	def move_forward(self):
+		view = self.current_view
 
+		if(view == self.artist_view):
+			if(self.album_view != None):
+				self.set_current_view(self.album_view)
+				self.bread_crumb.highlight_artist()
+		elif(view == self.album_view):
+			if(self.artist_view != None):
+				self.set_current_view(self.song_view)
+				self.bread_crumb.highlight_album()
+
+	def move_backwards(self):
+		view = self.current_view
+
+		if(view == self.album_view):
+			self.set_current_view(self.artist_view)
+		elif(view == self.song_view):
+			self.set_current_view(self.album_view)
+			self.bread_crumb.highlight_artist()
 
 
 list_data = [("MX Missiles", "Andrew Bird", "The Myterious Production of Eggs"),

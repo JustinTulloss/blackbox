@@ -17,6 +17,10 @@ def quit_on_q(src, data=None):
 		main_list.change_selection(-1)
 	elif(data.keyval == 115): #s selects
 		main_list.make_selection()
+	elif(data.keyval == 102): #f moves forward
+		main_list.move_forward()
+	elif(data.keyval == 98): #b moves backwards
+		main_list.move_backwards()
 
 def main():
 	main_win = gtk.Window()
