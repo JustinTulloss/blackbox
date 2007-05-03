@@ -1,50 +1,67 @@
 import gtk
 
+MAX_CRUMBS = 4
 
 class bread_crumb(gtk.HBox):
 	def __init__(self):
 		gtk.HBox.__init__(self)
-		self.artist_label = gtk.Label()
-		self.artist_val = ""
-		self.album_label = gtk.Label()
-		self.album_val = ""
-		self.seperator = gtk.Label(">")
 
-		self.pack_start(self.artist_label, False, True)
-		
+		self.crumb_list = [] #This will hold label, value, seperator triples
+		for i in range(MAX_CRUMBS):
+			label = gtk.Label()
+			value = None
+			if(i==0): #This is the top element, so it doesn't have a seperator
+				seperator = None
+			else:
+				seperator = gtk.Label(">")
+
+			self.crumb_list.append((label, value, seperator))
+
+		self.highlighted_crumb = 0
+
 		self.initialized = False
 
-	def get_artist(self):
-		return self.artist_label.get_text()
+	def get_crumb(self, num):
+		(label, value, seperator) = self.crumb_list[num]
+		return value
 
-	def highlight_artist(self):
-		self.artist_label.set_markup("<u>"+self.artist_val+"</u>")
-		self.album_label.set_text(self.album_val)
-
-	def set_artist(self, value):
-		self.artist_val = value
-		self.seperator.hide()
-		self.album_label.hide()
-
-		self.highlight_artist()
-
+	def set_crumb(self, num, new_value):
 		if(self.initialized == False):
-			self.pack_start(self.seperator, False, True)
-			self.pack_start(self.album_label, False, True)
+			for (label, value, seperator) in self.crumb_list:
+				if(seperator != None):
+					self.pack_start(seperator, False, True)
+				self.pack_start(label, False, True)
 			
 			self.initialized = True
 
-	def get_album(self):
-		return self.album_label.get_text()
+		(label, value, seperator) = self.crumb_list[num]
+		if(seperator != None):
+			seperator.show()
 
-	def highlight_album(self):
-		self.album_label.set_markup("<u>"+self.album_val+"</u>")
-		self.artist_label.set_text(self.artist_val)
+		self.crumb_list[num] = (label, new_value, seperator)
+		self.highlight_crumb(num)
+ 		
+		#We want to hide all crumbs above current one
+		for i in range(num+1, MAX_CRUMBS):
+			(label, value, seperator) = self.crumb_list[i]
+			label.hide()
+			seperator.hide()
+	
+	def highlight_crumb(self, num):
+		(label, value, seperator) = self.crumb_list[self.highlighted_crumb]
+		label.set_text(value)
 
-	def set_album(self, value):
-		self.album_val = value
-		self.album_label.show()
-		self.seperator.show()
+		(label, value, seperator) = self.crumb_list[num]
+		label.set_markup("<u>"+value+"</u>")
+		label.show()
+		self.highlighted_crumb = num
 
-		self.highlight_album()
-
+	def move_forward(self):
+		new_i = self.highlighted_crumb+1
+		if(new_i < MAX_CRUMBS):
+			self.highlight_crumb(new_i)
+	
+	def move_backwards(self):
+		new_i = self.highlighted_crumb-1
+		if(new_i >= 0):
+			self.highlight_crumb(new_i)

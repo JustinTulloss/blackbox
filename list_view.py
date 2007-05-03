@@ -5,12 +5,12 @@ import gtk
 import breadcrumb
 
 (TITLE_COL, ARTIST_COL, ALBUM_COL, PATH_COL)= range(4)
+(HOME_CRUMB, ARTIST_CRUMB, ALBUM_CRUMB) = range(3)
 
 class list_view(gtk.VBox):
 	def __init__(self, song_data):
 		gtk.VBox.__init__(self)
-		#gtk.ScrolledWindow.__init__(self)
-		#self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+
 		self.bread_crumb = breadcrumb.bread_crumb()
 		self.pack_start(self.bread_crumb, False, True)
 		
@@ -18,23 +18,7 @@ class list_view(gtk.VBox):
 		self.scrolled_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 		self.pack_start(self.scrolled_window)
 		
-		"""
-		self.model = gtk.ListStore(str, str, str, str)
-		populate_model(self.model)
-	
-		self.view = gtk.TreeView(self.model)
-		self.view.set_headers_visible(False)
-		column = gtk.TreeViewColumn("Songname", renderer, text=TITLE_COL)
-		self.view.append_column(column)
-		column = gtk.TreeViewColumn("Artist", renderer, text=ARTIST_COL)
-		self.view.append_column(column)
-		column = gtk.TreeViewColumn("Album", renderer, text=ALBUM_COL)
-		self.view.append_column(column)
-		"""
-
 		self.renderer = gtk.CellRendererText()
-
-		#self.view.set_enable_search(False)
 
 		self.song_data = song_data
 		self.artist_view = self.create_view(song_data, "artist", "Artists")
@@ -45,31 +29,6 @@ class list_view(gtk.VBox):
 
 		self.scrolled_window.add(self.artist_view)
 	
-	"""
-	def create_artist_view(self, song_data):
-		artist_store = self.create_store(song_data, "artist")
-		artist_view = gtk.TreeView(artist_store)
-
-		column = gtk.TreeViewColumn("Artist", self.renderer, text=0)
-		artist_view.append_column(column)
-
-		artist_view.set_enable_search(False)
-
-		return artist_view
-
-	def create_album_view(self, song_data, artist):
-		new_data = [x for x in self.song_data if x["artist"]==artist]
-		album_store = self.create_store(new_data, "album")
-		album_view = gtk.TreeView(album_store)
-
-		column = gtk.TreeViewColumn("Album", self.renderer, text=0)
-		album_view.append_column(column)
-
-		album_view.set_enable_search(False)
-
-		return album_view
-	"""
-
 	def create_view(self, song_data, col_name, col_header):
 		store = self.create_store(song_data, col_name)
 
@@ -81,7 +40,6 @@ class list_view(gtk.VBox):
 		view.set_enable_search(False)
 
 		return view
-
 
 	def create_store(self, song_data, col_name):
 		"""Creates a list store based on one field, and removed duplicates"""
@@ -101,6 +59,8 @@ class list_view(gtk.VBox):
 
 	def grab_focus(self):
 		self.current_view.grab_focus()
+		#Trying to delay setting this till after show_all
+		self.bread_crumb.set_crumb(0, "Home")
 
 	#moves the selection by amount
 	def change_selection(self, amount):
@@ -125,13 +85,13 @@ class list_view(gtk.VBox):
 			self.album_view = self.create_view(new_data, "album", "Albums")
 			self.set_current_view(self.album_view)
 
-			self.bread_crumb.set_artist(val)
+			self.bread_crumb.set_crumb(ARTIST_CRUMB, val)
 		elif(view == self.album_view): #Goto song view
 			new_data = [x for x in self.song_data if x["album"]==val]
 			self.song_view = self.create_view(new_data, "title", "Songs")
 			self.set_current_view(self.song_view)
 
-			self.bread_crumb.set_album(val)
+			self.bread_crumb.set_crumb(ALBUM_CRUMB, val)
 		elif(view == self.song_view): #Play song
 			songs = [x for x in self.song_data if x["title"]==val]
 			song = songs[0]
@@ -151,20 +111,38 @@ class list_view(gtk.VBox):
 		if(view == self.artist_view):
 			if(self.album_view != None):
 				self.set_current_view(self.album_view)
-				self.bread_crumb.highlight_artist()
+				self.bread_crumb.move_forward()
 		elif(view == self.album_view):
 			if(self.artist_view != None):
 				self.set_current_view(self.song_view)
-				self.bread_crumb.highlight_album()
+				self.bread_crumb.move_forward()
 
 	def move_backwards(self):
 		view = self.current_view
 
 		if(view == self.album_view):
 			self.set_current_view(self.artist_view)
+			self.bread_crumb.move_backwards()
 		elif(view == self.song_view):
 			self.set_current_view(self.album_view)
-			self.bread_crumb.highlight_artist()
+			self.bread_crumb.move_backwards()
+
+	def enqueue_selection(self):
+		view = self.current_view
+		
+		(store, iter) = view.get_selection().get_selected()
+		val = store.get_value(iter, 0)
+
+		if(view == self.artist_view):
+			songs = [x for x in self.song_data if x["artist"]==val]
+			self.play_queue.enqueue(songs)
+		elif(view == self.album_view):
+			songs = [x for x in self.song_data if x["album"]==val]
+			self.play_queue.enqueue(songs)
+		elif(view == self.song_view):
+			songs = [x for x in self.song_data if x["title"]==val]
+			self.play_queue.enqueue(songs)
+		
 
 
 list_data = [("MX Missiles", "Andrew Bird", "The Myterious Production of Eggs"),
