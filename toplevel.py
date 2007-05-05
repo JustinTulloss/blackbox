@@ -2,11 +2,13 @@ import gtk
 import list_view
 import play_queue
 import play_bar
+import play_controls
 
 #Various widgets
 main_list = list_view.list_view(list_view.g_song_data)
 iplay_queue = play_queue.play_queue()
-iplay_bar = play_bar.play_bar()
+iplay_bar = play_bar.play_bar(0x334466)
+iplay_controls = play_controls.play_controls()
 
 def destroy(src, data=None):
 	gtk.main_quit()
@@ -40,6 +42,10 @@ def main():
 
 	#This table will serve as the main layout container
 	main_table = gtk.Table(2, 2)
+	#main_table.set_col_spacing(0, 1)
+	main_win.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(0,0,65000,0))
+	#main_win.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0,0,0,0))
+	
 	main_win.add(main_table)
 
 	main_table.attach(iplay_bar, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
@@ -47,7 +53,8 @@ def main():
 	#main_list = list_view.list_view()
 	main_table.attach(main_list, 1, 2, 0, 1)
 
-	main_table.attach(iplay_queue, 0, 1, 0, 1, 0, gtk.FILL)
+	main_table.attach(iplay_queue, 0, 1, 0, 1, 0)
+	main_table.attach(iplay_controls, 0,1,1,2, gtk.FILL, gtk.FILL)
 
 	#Connect components
 	main_list.play_queue = iplay_queue
