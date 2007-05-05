@@ -125,6 +125,7 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		cr.set_source_rgb(bgcolor[0],bgcolor[1],bgcolor[2])
 		cr.fill()
 		"""
+		This is the blue gradient that is the same as the play_bar background
 		#draw BG gradient
 		bg = cairo.LinearGradient(.5, 0, .5, 1)
 		bgcolor = cairo_color(self._bgcolor)

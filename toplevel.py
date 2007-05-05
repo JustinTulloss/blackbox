@@ -42,18 +42,22 @@ def main():
 
 	#This table will serve as the main layout container
 	main_table = gtk.Table(2, 2)
+	main_hbox = onepix()
 	#main_table.set_col_spacing(0, 1)
 	main_win.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(0,0,65000,0))
 	#main_win.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0,0,0,0))
 	
 	main_win.add(main_table)
 
-	main_table.attach(iplay_bar, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
+	main_table.attach(iplay_bar, 1, 2, 1, 2, gtk.FILL|gtk.EXPAND, gtk.FILL)
 
 	#main_list = list_view.list_view()
-	main_table.attach(main_list, 1, 2, 0, 1)
+	#main_table.attach(main_list, 1, 2, 0, 1)
+	#main_table.attach(iplay_queue, 0, 1, 0, 1, 0)
+	main_hbox._hbox.pack_end_defaults(main_list)
+	main_hbox._hbox.pack_end(iplay_queue, False, False, 0)
+	main_table.attach(main_hbox, 0, 2, 0, 1)
 
-	main_table.attach(iplay_queue, 0, 1, 0, 1, 0)
 	main_table.attach(iplay_controls, 0,1,1,2, gtk.FILL, gtk.FILL)
 
 	#Connect components
@@ -66,6 +70,13 @@ def main():
 	main_list.grab_focus()
 
 	gtk.main()
+
+class onepix(gtk.EventBox):
+	_hbox = gtk.HBox(False, 1)
+	def __init__(self):
+		super(onepix, self).__init__()
+		self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(0,0,0))
+		self.add(self._hbox)
 
 if __name__=="__main__":
 	main()
