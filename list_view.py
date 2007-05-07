@@ -22,8 +22,8 @@ class list_view(gtk.VBox):
 		self.scrolled_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 		self.pack_start(self.scrolled_window)
 		
-		#self.renderer = gtk.CellRendererText()
-		self.renderer = ListRenderer()
+		self.renderer = gtk.CellRendererText()
+		#self.renderer = ListRenderer()
 
 		self.song_data = song_data
 		self.artist_view = self.create_view(song_data, "artist", "Artists")
@@ -156,9 +156,11 @@ class ListRenderer(gtk.GenericCellRenderer):
 		super(ListRenderer, self).__init__()
 
 	def on_render(self, window, widget, background_area, expose_area, flags, other):
-		print widget
 		cr = window.cairo_create()
-		draw_bg(cr, 0x664433, background_area)
+		if other %2 ==0:
+			draw_bg(cr, 0x664433, background_area)
+		else:
+			draw_bg(cr, 0x664433, background_area)
 		
 
 
