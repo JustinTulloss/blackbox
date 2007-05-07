@@ -5,34 +5,46 @@ from cairo_help import *
 #This class shows what is playing and eventually should handle all music
 #It will need to dequeue songs from the song list when it needs them
 class play_bar(gtk.HBox):
-	def __init__(self, bg=0x000000):
-		gtk.HBox.__init__(self)
-		self._bgcolor = bg
 
-		#self.pack_start(gtk.Label("Now Playing: "), False, True)
-		self.pack_start(PlayDetails(self._bgcolor))
+	#__gsignals__ = dict(new_song=(gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE,
+	#					(gobject.TYPE_PYOBJECT, gobject.TYPE_INT)))
+
+	def __init__(self):
+		super(play_bar, self).__init__()
+
+		self._details = PlayDetails()
+		self.pack_start(self._details)
 
 		self.now_playing = None
 
 	def play_song(self, song):
-		if(self.now_playing == None): #need to initialize
-			#self.now_playing = gtk.Label()
-			#self.now_playing = PlayDetails(self._bg)
-			self.now_playing.show()
-			#self.pack_start(self.now_playing, False, True)
-
-		self.now_playing.set_text(song["title"])
+		self._details.song = song
 
 class PlayDetails(gtk.DrawingArea):
-	def __init__(self, bg):
+	_song = {}
+	_bgcolor = 0x334466
+	def __init__(self):
 		super(PlayDetails, self).__init__()
 		#connect events
 		self.connect("expose_event", self.expose)
 
 		#decompose bg color into cairo values (floats between 0 and 1)
-		self._bgcolor = cairo_color(bg)
 		self.set_size_request(700, 100)
 	
+	def set_song(self, song):
+		if song != None:
+			self._song = song
+		else:
+			song = {}
+		#redraw the info box
+		cr = self.window.cairo_create()
+		self.draw(cr, False)
+	
+	def get_song(self):
+		return self._song
+	
+	song = property(lambda self: self.get_song(), lambda self, s: self.set_song(s))
+
 	def expose(self, widget, event):
 		cr = widget.window.cairo_create()
 
@@ -42,36 +54,38 @@ class PlayDetails(gtk.DrawingArea):
 
 		self.draw(cr)
 	
-	def do_size_request(self, request):
-		print "Hey"
-
-	def draw(self, cr):
-		cr.save()
-		rect = self.get_allocation()
-		cr.scale(rect.width, rect.height)
-		
-		self.draw_background(cr)
-		cr.restore()
+	def draw(self, cr, draw_bg=True):
+		self.draw_background(cr, draw_bg)
 		self.draw_progressbar(cr)
 		self.draw_text(cr)
 	
-	def draw_background(self, cr):
-		bgcolor = self._bgcolor
+	def draw_background(self, cr, draw_bg=True):
+		rect = self.get_allocation()
+		if draw_bg:
+			bgcolor = cairo_color(self._bgcolor)
+			cr.save()
+			cr.scale(rect.width, rect.height)
+			cr.rectangle(0,0, 1,1)
+			bg = cairo.LinearGradient(.5, 0, .5, 1)
+			bg.add_color_stop_rgba(0, bgcolor[0]+.2, bgcolor[1]+.2, bgcolor[2]+.2, 1)
+			bg.add_color_stop_rgba(1, bgcolor[0], bgcolor[1], bgcolor[2], 1)
+			cr.set_source(bg)
+			cr.fill()
+			cr.restore()
+
+
+		cr.save()
+		cr.scale(rect.width, rect.height)
+
 		dispbgcolor = 0xfeffbf #TODO: Make this not hardcoded
 		dbc = cairo_color(dispbgcolor)
-		cr.rectangle(0,0, 1,1)
-		bg = cairo.LinearGradient(.5, 0, .5, 1)
-		bg.add_color_stop_rgba(0, bgcolor[0]+.2, bgcolor[1]+.2, bgcolor[2]+.2, 1)
-		bg.add_color_stop_rgba(1, bgcolor[0], bgcolor[1], bgcolor[2], 1)
-		cr.set_source(bg)
-		cr.fill()
-
 		cr.rectangle(.1,.166, .75,.66)
 		#save off this size for fonts
 		self._dispcorner = cr.user_to_device(.1,.25)
 		self._dispdim = cr.user_to_device_distance(.75, .5)
 		cr.set_source_rgb(dbc[0], dbc[1], dbc[2])
 		cr.fill()
+		cr.restore()
 	
 	def draw_progressbar(self, cr):
 		"""Draws a indicator of how long there is in the song"""
@@ -79,7 +93,6 @@ class PlayDetails(gtk.DrawingArea):
 		#Our world is the yellow box
 		cr.save()
 		cr.translate(self._dispcorner[0], self._dispcorner[1])
-		#cr.scale(self._dispdim[0], self._dispdim[1])
 		cr.rectangle(.1*self._dispdim[0], .8*self._dispdim[1],
 			.8*self._dispdim[0], .2*self._dispdim[1])
 		cr.set_line_width(1)
@@ -93,28 +106,42 @@ class PlayDetails(gtk.DrawingArea):
 		cr.save()
 		cr.translate(self._dispcorner[0], self._dispcorner[1])
 		#cr.scale(min(self._dispdim), min(self._dispdim))
-		self._song = {"title": "Title", "artist":"Artist", "album": "Album"}
+		#self._song = {"title": "Title", "artist":"Artist", "album": "Album"}
 
 		#draw title
-		cr.set_font_size(self._dispdim[1]/2)
+		if self.song.has_key("title"):
+			title = self.song["title"]
+		else:
+			title = "Rubicon Music Player"
+
+		cr.set_font_size(self._dispdim[1]/3)
 		cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, 
-			cairo.FONT_WEIGHT_NORMAL)#Trebuchet MS for serious
+			cairo.FONT_WEIGHT_NORMAL)
 		x_bear, y_bear, width, theight, x_adv, y_adv = \
-			cr.text_extents(self._song["title"])
+			cr.text_extents(title)
 
 		cr.set_source_rgb(0,0,0)
 		cr.move_to(self._dispdim[0]/2-width/2, theight)
-		cr.show_text(self._song["title"])
+		cr.show_text(title)
 		cr.stroke()
 
 		#draw other string
+		if self.song.has_key("artist") and self.song.has_key("album"):
+			infostring = self.song["artist"] + " - " + self.song["album"]
+		elif self.song.has_key("artist"):
+			infostring = self.song["artist"]
+		elif self.song.has_key("album"):
+			infostring = self.song["album"]
+		else:
+			infostring = "The free, legal, user friendly music sharing software"
+
 		cr.set_font_size(self._dispdim[1]/5)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL,
 			cairo.FONT_WEIGHT_NORMAL)
 		x_bear, y_bear, width, oheight, x_adv, y_adv = \
-			cr.text_extents(self._song["artist"]+" - " + self._song["album"])
+			cr.text_extents(infostring)
 		cr.move_to(self._dispdim[0]/2 - width/2, theight+oheight+self._dispdim[1]*.1)
-		cr.show_text(self._song["artist"]+" - " + self._song["album"])
+		cr.show_text(infostring)
 		cr.stroke()
 		cr.restore()
 
@@ -125,7 +152,7 @@ class PlayDetails(gtk.DrawingArea):
 if __name__ == "__main__":
 	w= gtk.Window()
 	w.connect("destroy", gtk.main_quit)
-	p = play_bar(0x334466)
+	p = play_bar()
 	w.add(p)
 	w.show_all()
 

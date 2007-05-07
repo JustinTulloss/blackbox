@@ -1,15 +1,19 @@
-#TODO: right now, breaks if there is songs by the same name,
+#TODO: right now, breaks if there are songs by the same name,
 #	but different artists
+#
+#TODO: Rework this so it's not a giant hardcoded if/else parade
 
 import gtk
+import gobject
 import breadcrumb
+from cairo_help import *
 
 (TITLE_COL, ARTIST_COL, ALBUM_COL, PATH_COL)= range(4)
 (HOME_CRUMB, ARTIST_CRUMB, ALBUM_CRUMB) = range(3)
 
 class list_view(gtk.VBox):
 	def __init__(self, song_data):
-		gtk.VBox.__init__(self)
+		super(list_view, self).__init__()
 
 		self.bread_crumb = breadcrumb.bread_crumb()
 		self.pack_start(self.bread_crumb, False, True)
@@ -18,7 +22,8 @@ class list_view(gtk.VBox):
 		self.scrolled_window.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 		self.pack_start(self.scrolled_window)
 		
-		self.renderer = gtk.CellRendererText()
+		#self.renderer = gtk.CellRendererText()
+		self.renderer = ListRenderer()
 
 		self.song_data = song_data
 		self.artist_view = self.create_view(song_data, "artist", "Artists")
@@ -142,6 +147,18 @@ class list_view(gtk.VBox):
 		elif(view == self.song_view):
 			songs = [x for x in self.song_data if x["title"]==val]
 			self.play_queue.enqueue(songs)
+
+class ListRenderer(gtk.GenericCellRenderer):
+	__gproperties__= {'text' : (gobject.TYPE_PYOBJECT, 'text to display',
+								"This is the text to display in the queue",
+								gobject.PARAM_WRITABLE)}
+	def __init__(self):
+		super(ListRenderer, self).__init__()
+
+	def on_render(self, window, widget, background_area, expose_area, flags, other):
+		print widget
+		cr = window.cairo_create()
+		draw_bg(cr, 0x664433, background_area)
 		
 
 

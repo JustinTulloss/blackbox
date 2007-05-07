@@ -117,6 +117,13 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		
 		#setup
 		cr = window.cairo_create()
+		#gray version
+		draw_bg_gradient(cr, 0x909090, expose_area)
+		#blue version
+		#draw_bg_gradient(cr, 0x334466, background_area)
+
+		"""
+		Gray without gradient & white separator
 		cr.rectangle(expose_area)
 		cr.save()
 		cr.translate(expose_area.x, expose_area.y)
@@ -125,19 +132,8 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		cr.set_source_rgb(bgcolor[0],bgcolor[1],bgcolor[2])
 		cr.fill()
 		"""
-		This is the blue gradient that is the same as the play_bar background
-		#draw BG gradient
-		bg = cairo.LinearGradient(.5, 0, .5, 1)
-		bgcolor = cairo_color(self._bgcolor)
-		#bg.add_color_stop_rgba(0, 139.0/255.0,173.0/255.0,122.0/255.0, 1)
-		#bg.add_color_stop_rgba(1, 119.0/255.0,153.0/255.0,102.0/255.0, 1)
-		bg.add_color_stop_rgba(0, bgcolor[0]+.2, bgcolor[1]+.2, bgcolor[2]+.2, 1)
-		bg.add_color_stop_rgba(1, bgcolor[0], bgcolor[1], bgcolor[2], 1)
-		cr.set_source(bg)
-		cr.fill()
-		"""
 
-		cr.restore()
+		#cr.restore()
 		#cr.move_to(0,5)
 		#cr.line_to(expose_area.width, expose_area.height)
 		#cr.set_source_rgb(0,0,0)

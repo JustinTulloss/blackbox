@@ -7,7 +7,7 @@ import play_controls
 #Various widgets
 main_list = list_view.list_view(list_view.g_song_data)
 iplay_queue = play_queue.play_queue()
-iplay_bar = play_bar.play_bar(0x334466)
+iplay_bar = play_bar.play_bar()
 iplay_controls = play_controls.play_controls()
 
 def destroy(src, data=None):
@@ -54,7 +54,7 @@ def main():
 	#main_list = list_view.list_view()
 	#main_table.attach(main_list, 1, 2, 0, 1)
 	#main_table.attach(iplay_queue, 0, 1, 0, 1, 0)
-	main_hbox._hbox.pack_end_defaults(main_list)
+	main_hbox._hbox.pack_end(main_list)
 	main_hbox._hbox.pack_end(iplay_queue, False, False, 0)
 	main_table.attach(main_hbox, 0, 2, 0, 1)
 
