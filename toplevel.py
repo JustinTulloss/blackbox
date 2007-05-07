@@ -3,9 +3,16 @@ import list_view
 import play_queue
 import play_bar
 import play_controls
+import sys #used for command line
+import song_info
+
+if(sys.argv[1] != ''):
+	song_list = song_info.get_song_list(sys.argv[1])
+else:
+	song_list = list_view.g_song_data
 
 #Various widgets
-main_list = list_view.list_view(list_view.g_song_data)
+main_list = list_view.list_view(song_list)
 iplay_queue = play_queue.play_queue()
 iplay_bar = play_bar.play_bar()
 iplay_controls = play_controls.play_controls()

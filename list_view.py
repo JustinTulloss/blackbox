@@ -7,6 +7,7 @@ import gtk
 import gobject
 import breadcrumb
 from cairo_help import *
+import song_info
 
 (TITLE_COL, ARTIST_COL, ALBUM_COL, PATH_COL)= range(4)
 (HOME_CRUMB, ARTIST_CRUMB, ALBUM_CRUMB) = range(3)
@@ -55,6 +56,7 @@ class list_view(gtk.VBox):
 		val_list = sorted(set(val_list))
 		
 		store = gtk.ListStore(str)
+		store.set_sort_column_id(0, gtk.SORT_ASCENDING)
 
 		for val in val_list:
 			iter = store.insert_after(None, None)
@@ -162,12 +164,6 @@ class ListRenderer(gtk.GenericCellRenderer):
 		else:
 			draw_bg(cr, 0x664433, background_area)
 		
-
-
-list_data = [("MX Missiles", "Andrew Bird", "The Myterious Production of Eggs"),
-			("Come Together", "The Beatles", "Abbey Road"),
-			("Black Dog", "Led Zeppelin", "IV")] * 30
-
 g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
 					"title":"Come Together"},
 				{"artist":"The Beatles", "album":"Abbey Road",
@@ -178,17 +174,10 @@ g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
 					"album":"The Mysterious Production of Eggs",
 					"title":"MX Missiles"}]
 
-def populate_model(model):
-	for (song, artist, album) in list_data:
-		iter = model.insert_before(None, None)
-		model.set_value(iter, TITLE_COL, song)
-		model.set_value(iter, ARTIST_COL, artist)
-		model.set_value(iter, ALBUM_COL, album)
-	
-
 def test():
 	main_win = gtk.Window()
-	list_test = list_view(g_song_data)
+	#list_test = list_view(g_song_data)
+	list_test = list_view(song_info.get_song_list("/mnt/windows/MyMusic"))
 	main_win.add(list_test)
 	main_win.show_all()
 
