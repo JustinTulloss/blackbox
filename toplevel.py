@@ -6,6 +6,7 @@ import play_controls
 import sys #used for command line
 import song_info
 import gtkwiid
+import getopt
 
 PLAYING = 0
 PAUSED = 1
@@ -13,9 +14,23 @@ STOPPED = 2
 
 playmode = STOPPED
 
-if(len(sys.argv)>1):
-	song_list = song_info.get_song_list(sys.argv[1])
-else:
+#if(len(sys.argv)>1):
+#	song_list = song_info.get_song_list(sys.argv[1])
+#else:
+#	song_list = list_view.g_song_data
+
+argv = sys.argv[1:]
+optlist, args = getopt.getopt(argv, "f:w", ["files=", "use-wiimote"])
+
+use_wii = False
+song_list = None
+for opt, arg in optlist:
+	if opt in("-w", "--use-wiimote"):
+		use_wii = True
+	elif opt in ("-f", "--files"):
+		song_list = song_info.get_song_list(arg)
+
+if song_list == None:
 	song_list = list_view.g_song_data
 
 #Various widgets
@@ -62,26 +77,29 @@ def playfunction(src):
 
 def main():
 	main_win = gtk.Window()
-	wii = gtkwiid.gtkWiimote()
 
+	if use_wii == True:
+		wii = gtkwiid.gtkWiimote()
+
+		wii.connect("selected", main_list.make_selection)
+		wii.connect("nav_forward", main_list.move_forward)
+		wii.connect("nav_back", main_list.move_backwards)
+		wii.connect("home", main_list.move_home)
+		wii.connect("enqueue", main_list.enqueue_selection)
+		wii.connect("scroll", main_list.change_selection)
+		wii.connect("play_pressed", iplay_controls.play_pressed)
+		wii.connect("play_released", iplay_controls.play_released)
+		wii.connect("song_forward_pressed", iplay_controls.forward_pressed)
+		wii.connect("song_forward_released", iplay_controls.forward_released)
+		wii.connect("song_back_pressed", iplay_controls.back_pressed)
+		wii.connect("song_back_released", iplay_controls.back_released)
+	
+		#We need to replace this with logic that works
+		wii.connect("play_released", playfunction)
+	
 	#Allow us to quit by pressing 'q'
 	main_win.connect("destroy", destroy)
 	main_win.connect("key_press_event", quit_on_q)
-	wii.connect("selected", main_list.make_selection)
-	wii.connect("nav_forward", main_list.move_forward)
-	wii.connect("nav_back", main_list.move_backwards)
-	wii.connect("home", main_list.move_home)
-	wii.connect("enqueue", main_list.enqueue_selection)
-	wii.connect("scroll", main_list.change_selection)
-	wii.connect("play_pressed", iplay_controls.play_pressed)
-	wii.connect("play_released", iplay_controls.play_released)
-	wii.connect("song_forward_pressed", iplay_controls.forward_pressed)
-	wii.connect("song_forward_released", iplay_controls.forward_released)
-	wii.connect("song_back_pressed", iplay_controls.back_pressed)
-	wii.connect("song_back_released", iplay_controls.back_released)
-	
-	#We need to replace this with logic that works
-	wii.connect("play_released", playfunction)
 
 	#This table will serve as the main layout container
 	main_table = gtk.Table(2, 2)
