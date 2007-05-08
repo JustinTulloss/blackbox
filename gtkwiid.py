@@ -8,7 +8,7 @@
 import gtk
 gtk.gdk.threads_init()
 import gobject
-import cwiidpy
+import cwiid
 import math
 import struct
 import threading
@@ -51,8 +51,8 @@ class gtkWiimote(gtk.Widget):
 
 	def __init__(self):
 		super(gtkWiimote, self).__init__()
-		self._mote = cwiidpy.Wiimote(cwiidpy.FLAG_MESG_IFC)
-		self._mote.command(cwiidpy.CMD_RPT_MODE, cwiidpy.RPT_BTN|cwiidpy.RPT_ACC)
+		self._mote = cwiid.Wiimote(cwiid.FLAG_MESG_IFC)
+		self._mote.command(cwiid.CMD_RPT_MODE, cwiid.RPT_BTN|cwiid.RPT_ACC)
 		self._mote.set_callback(self.cwiidCallback)
 
 		#state machine variables
@@ -62,12 +62,12 @@ class gtkWiimote(gtk.Widget):
 		self._btnmask = 0
 
 		#read in accelerometer calibration
-		accel_buf = self._mote.read(cwiidpy.RW_EEPROM, 0x16, 7)
+		accel_buf = self._mote.read(cwiid.RW_EEPROM, 0x16, 7)
 		self._accel_calib = struct.unpack("BBBBBBB", accel_buf)
 		
 		#initialize different callbacks
-		self._actions[cwiidpy.MESG_BTN] = self.btn_cllbck
-		self._actions[cwiidpy.MESG_ACC] = self.acc_cllbck
+		self._actions[cwiid.MESG_BTN] = self.btn_cllbck
+		self._actions[cwiid.MESG_ACC] = self.acc_cllbck
 	
 
 	def cwiidCallback(self, mesgs):
@@ -87,7 +87,7 @@ class gtkWiimote(gtk.Widget):
 		a_y = (y - self._accel_calib[1])/(self._accel_calib[5]-self._accel_calib[1])
 		a_z = (z - self._accel_calib[2])/(self._accel_calib[6]-self._accel_calib[2])
 
-		b_on = self._btnmask & cwiidpy.BTN_B
+		b_on = self._btnmask & cwiid.BTN_B
 
 		roll = math.atan(float(a_x)/float(a_z))
 		if a_z<=0:
@@ -132,29 +132,29 @@ class gtkWiimote(gtk.Widget):
 		omask = self._btnmask
 		self._btnmask = btns
 
-		if(btns & cwiidpy.BTN_A):
+		if(btns & cwiid.BTN_A):
 			self.emit("selected")
-		if(btns & cwiidpy.BTN_HOME):
+		if(btns & cwiid.BTN_HOME):
 			self.emit("home")
 
-		if(btns & cwiidpy.BTN_UP):
+		if(btns & cwiid.BTN_UP):
 			self.emit("play_pressed")
-		elif(omask & cwiidpy.BTN_UP):
+		elif(omask & cwiid.BTN_UP):
 			self.emit("play_released")
 
-		if(btns & cwiidpy.BTN_RIGHT):
+		if(btns & cwiid.BTN_RIGHT):
 			self.emit("song_forward_pressed")
-		elif(omask & cwiidpy.BTN_RIGHT):
+		elif(omask & cwiid.BTN_RIGHT):
 			self.emit("song_forward_released")
 		
-		if(btns & cwiidpy.BTN_LEFT):
+		if(btns & cwiid.BTN_LEFT):
 			self.emit("song_back_pressed")
-		elif(omask & cwiidpy.BTN_LEFT):
+		elif(omask & cwiid.BTN_LEFT):
 			self.emit("song_back_released")
 
-		if(btns & cwiidpy.BTN_MINUS):
+		if(btns & cwiid.BTN_MINUS):
 			self.emit("nav_back")
-		if(btns & cwiidpy.BTN_PLUS):
+		if(btns & cwiid.BTN_PLUS):
 			self.emit("nav_forward")
 		
 
