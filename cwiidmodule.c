@@ -19,6 +19,9 @@
  * Boston, MA  02110-1301  USA
  *
  * ChangeLog:
+ * 2007-05-07 Justin M. Tulloss <jmtulloss@gmail.com>
+ * * Refactored according to dsmith's wishes, removed unnecessary locks
+ *
  * 2007-04-26 Justin M. Tulloss <jmtulloss@gmail.com>
  * * Updated for new libcwiid API
  *
@@ -26,6 +29,8 @@
  * * Initial Changelog
  */
 
+//Apparently this has to be first for every python interpreter extension
+#include "Python.h"
 
 //Standard Includes
 #include <stdio.h>
@@ -37,22 +42,22 @@
 #include <pthread.h>
 
 //Interesting includes
-#include "Python.h"
 #include "cwiid.h"
 #include "structmember.h"
 
 //Python Function declarations
 void initcwiidmodule(void);
-static int constructorwii(PyObject* self, PyObject* args);
-PyObject* readwii(PyObject* self, PyObject* args);
-PyObject* writewii(PyObject* self, PyObject* args);
-PyObject* commandwii(PyObject* self, PyObject* args);
-PyObject* disconnectwii(PyObject* self, PyObject* args);
-PyObject* enablewii(PyObject* self, PyObject* args);
-PyObject* disablewii(PyObject* self, PyObject* args);
-PyObject* get_mesgwii(PyObject* self, PyObject* args);
-PyObject* set_callbackwii(PyObject* self, PyObject* args);
-PyObject* get_statewii(PyObject* self, PyObject* args);
+
+static int Wiimote_constructor(PyObject* self, PyObject* args);
+PyObject* Wiimote_read(PyObject* self, PyObject* args);
+PyObject* Wiimote_write(PyObject* self, PyObject* args);
+PyObject* Wiimote_command(PyObject* self, PyObject* args);
+PyObject* Wiimote_disconnect(PyObject* self, PyObject* args);
+PyObject* Wiimote_enable(PyObject* self, PyObject* args);
+PyObject* Wiimote_disable(PyObject* self, PyObject* args);
+PyObject* Wiimote_get_mesg(PyObject* self, PyObject* args);
+PyObject* Wiimote_set_callback(PyObject* self, PyObject* args);
+PyObject* Wiimote_get_state(PyObject* self, PyObject* args);
 
 
 //Types
@@ -72,7 +77,7 @@ static PyObject*
 void callbackBridge(cwiid_wiimote_t* wiimote,
     int mesg_count, union cwiid_mesg mesg[]);
 static PyObject* processMesgs(int mesg_count, union cwiid_mesg mesg[]);
-static int wiiStart(cwiidmodule* self, int flags);
+static int cwiid_start(cwiidmodule* self, int flags);
 static PyObject* notImplemented();
 
 static bdaddr_t btAddr;
@@ -89,15 +94,15 @@ static PyMethodDef cwiidMethods[] =
 {
 
     //{"__init__", constructorwii, METH_VARARGS, "cwiid(function)"},
-    {"read", readwii, METH_VARARGS, "read from wiimote"},
-    {"write", writewii, METH_VARARGS, "write to wiimote"},
-    {"command", commandwii, METH_VARARGS, "send wiimote command"},
-    {"enable", enablewii, METH_VARARGS, "enable flags on wiimote"},
-    {"disable", disablewii, METH_VARARGS, "disable flags on wiimote"},
-    {"get_mesg", get_mesgwii, METH_VARARGS, "blocking call to get messages"},
-    {"set_callback", set_callbackwii, METH_VARARGS, "setup a mesg processing callback"},
-    {"get_state", get_statewii, METH_VARARGS, "polling interface"},
-    {"disconnect", disconnectwii, METH_VARARGS, "disconnect wiimote"},
+    {"read", Wiimote_read, METH_VARARGS, "read from wiimote"},
+    {"write", Wiimote_write, METH_VARARGS, "write to wiimote"},
+    {"command", Wiimote_command, METH_VARARGS, "send wiimote command"},
+    {"enable", Wiimote_enable, METH_VARARGS, "enable flags on wiimote"},
+    {"disable", Wiimote_disable, METH_VARARGS, "disable flags on wiimote"},
+    {"get_mesg", Wiimote_get_mesg, METH_VARARGS, "blocking call to get messages"},
+    {"set_callback", Wiimote_set_callback, METH_VARARGS, "setup a mesg processing callback"},
+    {"get_state", Wiimote_get_state, METH_VARARGS, "polling interface"},
+    {"disconnect", Wiimote_disconnect, METH_VARARGS, "disconnect wiimote"},
     {NULL, NULL}
 };
 
@@ -109,10 +114,10 @@ static PyMemberDef cwiidMembers[] = {
 
 
 //Defines a new type in python
-static PyTypeObject cwiidmoduleType = {
+static PyTypeObject WiimoteType= {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "cwiidmodule.cwiidmodule", /*tp_name*/
+    "cwiidmodule.Wiimote", /*tp_name*/
     sizeof(cwiidmodule),       /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)cwiidmodule_dealloc, /*tp_dealloc*/
@@ -146,7 +151,7 @@ static PyTypeObject cwiidmoduleType = {
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    (initproc)constructorwii,  /* tp_init */
+    (initproc)Wiimote_constructor,  /* tp_init */
     0,                         /* tp_alloc */
     cwiidmodule_new,                 /* tp_new */
 };
@@ -175,7 +180,7 @@ initcwiidmodule(void)
 {
     PyObject* m;
 
-    if (PyType_Ready(&cwiidmoduleType) <0 )
+    if (PyType_Ready(&WiimoteType) <0 )
         return;
 
     //Open the cwiid library
@@ -184,13 +189,13 @@ initcwiidmodule(void)
       "Module for accessing the wiimote through cwiid")))
         return;
 
-    Py_INCREF(&cwiidmoduleType);
-    PyModule_AddObject(m, "cwiidmodule", (PyObject*)&cwiidmoduleType);
+    Py_INCREF(&WiimoteType);
+    PyModule_AddObject(m, "Wiimote", (PyObject*)&WiimoteType);
 
 }
 
 int
-wiiStart(cwiidmodule* self, int flags)
+cwiid_start(cwiidmodule* self, int flags)
 {
     cwiid_wiimote_t* theMote;
     btAddr = *BDADDR_ANY;
@@ -207,7 +212,7 @@ wiiStart(cwiidmodule* self, int flags)
 }
 
 static int
-constructorwii(PyObject* self, PyObject* args)
+Wiimote_constructor(PyObject* self, PyObject* args)
 {
     PyObject* pyFlags;
 
@@ -221,7 +226,7 @@ constructorwii(PyObject* self, PyObject* args)
         }
     }
 
-    if(wiiStart((cwiidmodule*)self, PyInt_AsLong(pyFlags))<0)
+    if(cwiid_start((cwiidmodule*)self, PyInt_AsLong(pyFlags))<0)
     {
         PyErr_SetString(PyExc_IOError, "Could not connect to wiimote");
     }
@@ -232,19 +237,52 @@ constructorwii(PyObject* self, PyObject* args)
 
 
 PyObject* 
-readwii(PyObject* self, PyObject* args)
+Wiimote_read(PyObject* self, PyObject* args)
+{
+	//Python types
+	PyObject* pyflags;
+	PyObject* pyoffset;
+	PyObject* pylength;
+
+	PyObject* pyRetBuf;
+
+	//C types
+	uint8_t flags;
+	uint32_t offset;
+	uint32_t length;
+	void * buf;
+
+    PyArg_UnpackTuple(args, "read", 3, 3, &pyflags,&pyoffset,&pylength);
+    if(!(PyInt_Check(pyflags) 
+		&& PyInt_Check(pyoffset) 
+		&& PyInt_Check(pylength)))
+    {
+        PyErr_SetString(PyExc_TypeError, "arguments must be ints");
+    }
+	
+    //marshal everything over
+    flags  = (uint8_t)  PyInt_AsLong(pyflags);
+    offset = (uint32_t) PyInt_AsLong(pyoffset);
+	length = (uint32_t) PyInt_AsLong(pylength);
+
+	//TODO: More error checking
+	buf = malloc(length);
+	cwiid_read(((cwiidmodule*)self)->wiimote,flags,offset,length,buf);
+	pyRetBuf = PyBuffer_FromMemory((char*)buf, length);
+
+	Py_XINCREF(pyRetBuf);
+	return pyRetBuf;
+	
+}
+
+PyObject* 
+Wiimote_write(PyObject* self, PyObject* args)
 {
     return notImplemented();
 }
 
 PyObject* 
-writewii(PyObject* self, PyObject* args)
-{
-    return notImplemented();
-}
-
-PyObject* 
-commandwii(PyObject* self, PyObject* args)
+Wiimote_command(PyObject* self, PyObject* args)
 {
     //Python types
     PyObject* pycommand;
@@ -254,9 +292,6 @@ commandwii(PyObject* self, PyObject* args)
     enum cwiid_command command;
     uint8_t flags;
 
-    PyGILState_STATE gstate;
-
-    gstate = PyGILState_Ensure();
     PyArg_UnpackTuple(args, "command", 2, 2, &pycommand, &pyflags);
     if(!(PyInt_Check(pycommand) && PyInt_Check(pyflags)))
     {
@@ -267,45 +302,44 @@ commandwii(PyObject* self, PyObject* args)
     command = (enum cwiid_command) PyInt_AsLong(pycommand);
     flags = (uint8_t) PyInt_AsLong(pyflags);
 
+
     //finally, send the command to the wiimote
     cwiid_command(((cwiidmodule*)self)->wiimote, command, flags);
-    PyGILState_Release(gstate);
 
     Py_RETURN_NONE;
 }
 
 PyObject* 
-disconnectwii(PyObject* self, PyObject* args)
+Wiimote_disconnect(PyObject* self, PyObject* args)
 {
     return notImplemented();
 }
 
 PyObject* 
-enablewii(PyObject* self, PyObject* args)
+Wiimote_enable(PyObject* self, PyObject* args)
 {
     return notImplemented();
 }
 
 PyObject* 
-disablewii(PyObject* self, PyObject* args)
+Wiimote_disable(PyObject* self, PyObject* args)
 {
     return notImplemented();
 }
 
 PyObject* 
-get_mesgwii(PyObject* self, PyObject* args)
+Wiimote_get_mesg(PyObject* self, PyObject* args)
 {
     union cwiid_mesg** mesgs;
     int mesg_count;
-    
+
     //get the messages from Mr. Wiimote
-    cwiid_get_mesg(((cwiidmodule*)self)->wiimote, &mesg_count, mesgs);
 
     return processMesgs(mesg_count, *mesgs);
 }
 
 PyObject* 
-set_callbackwii(PyObject* self, PyObject* args)
+Wiimote_set_callback(PyObject* self, PyObject* args)
 {
     PyObject* pyCallback;
 
@@ -314,6 +348,7 @@ set_callbackwii(PyObject* self, PyObject* args)
     {
         PyErr_SetString(PyExc_TypeError, "callback must be callable!");
     }
+	Py_XINCREF(pyCallback);
 
     //Set this callback as an attribute in the class
     if (((cwiidmodule*)self)->callback== Py_None)//wasn't a callback before
@@ -327,7 +362,7 @@ set_callbackwii(PyObject* self, PyObject* args)
 }
 
 PyObject* 
-get_statewii(PyObject* self, PyObject* args)
+Wiimote_get_state(PyObject* self, PyObject* args)
 {
     return notImplemented();
 }
@@ -335,10 +370,7 @@ get_statewii(PyObject* self, PyObject* args)
 static PyObject*
 notImplemented()
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
     PyErr_SetString(PyExc_NotImplementedError, "This has not yet been implemented");
-    PyGILState_Release(gstate);
     
     Py_RETURN_NONE;
 }

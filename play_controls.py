@@ -18,6 +18,8 @@ class play_controls(gtk.EventBox):
 
 		#connect to various signals
 		self.connect("expose_event", self.expose)
+
+		self._state = 1
 		
 		#push icons on
 		self._backButton = gtk.Image()
@@ -45,6 +47,38 @@ class play_controls(gtk.EventBox):
 
 		rect=self.get_allocation()
 		draw_bg_gradient(cr, self._bgcolor, rect)
+	
+	def play_pressed(self, widget):
+		if self._state == 0:
+			self._playButton.set_from_file("icons/Pause_pressed.png")
+			self._state =1
+		elif self._state == 1:
+			self._playButton.set_from_file("icons/Play_pressed.png")
+			self._state =0
+		self.queue_draw()
+	
+	def play_released(self, widget):
+		if self._state == 0:
+			self._playButton.set_from_file("icons/Pause_hover.png")
+		elif self._state == 1:
+			self._playButton.set_from_file("icons/Play_hover.png")
+		self.queue_draw()
+	
+	def forward_pressed(self, widget):
+		self._nextButton.set_from_file("icons/Next_pressed.png")
+		self.queue_draw()
+	
+	def forward_released(self, widget):
+		self._nextButton.set_from_file("icons/Next_nohover.png")
+		self.queue_draw()
+	
+	def back_pressed(self, widget):
+		self._backButton.set_from_file("icons/Back_pressed.png")
+		self.queue_draw()
+		
+	def back_released(self, widget):
+		self._backButton.set_from_file("icons/Back_nohover.png")
+		self.queue_draw()
 		
 if __name__ == "__main__":
 	w = gtk.Window()

@@ -4,7 +4,7 @@
 #TODO: Rework this so it's not a giant hardcoded if/else parade
 
 import gtk
-import gobject
+#import gobject
 import breadcrumb
 from cairo_help import *
 import song_info
@@ -70,7 +70,7 @@ class list_view(gtk.VBox):
 		self.bread_crumb.set_crumb(0, "Home")
 
 	#moves the selection by amount
-	def change_selection(self, amount):
+	def change_selection(self, src, amount, crap):
 		view = self.current_view
 		((path,), col) = view.get_cursor()
 		path += amount
@@ -81,7 +81,7 @@ class list_view(gtk.VBox):
 		view.set_cursor((path))
 
 	#Performs the default action on the currently selected item
-	def make_selection(self):
+	def make_selection(self, src):
 		view = self.current_view
 		
 		(store, iter) = view.get_selection().get_selected()
@@ -112,7 +112,7 @@ class list_view(gtk.VBox):
 		self.current_view.show()
 		self.current_view.grab_focus()
 
-	def move_forward(self):
+	def move_forward(self, src):
 		view = self.current_view
 
 		if(view == self.artist_view):
@@ -124,7 +124,7 @@ class list_view(gtk.VBox):
 				self.set_current_view(self.song_view)
 				self.bread_crumb.move_forward()
 
-	def move_backwards(self):
+	def move_backwards(self, src):
 		view = self.current_view
 
 		if(view == self.album_view):
@@ -134,7 +134,7 @@ class list_view(gtk.VBox):
 			self.set_current_view(self.album_view)
 			self.bread_crumb.move_backwards()
 
-	def enqueue_selection(self):
+	def enqueue_selection(self, src):
 		view = self.current_view
 		
 		(store, iter) = view.get_selection().get_selected()
@@ -150,20 +150,20 @@ class list_view(gtk.VBox):
 			songs = [x for x in self.song_data if x["title"]==val]
 			self.play_queue.enqueue(songs)
 
-class ListRenderer(gtk.GenericCellRenderer):
-	__gproperties__= {'text' : (gobject.TYPE_PYOBJECT, 'text to display',
-								"This is the text to display in the queue",
-								gobject.PARAM_WRITABLE)}
+class RubiListStore(gtk.TreeView):
 	def __init__(self):
-		super(ListRenderer, self).__init__()
+		super(RubiListStore, self).__init__()
+		self.connect("expose_event", self.expose)
+	
+	def expose(self, widget, event):
+		cr = widget.window.cairo_create()
+		cr.rectangle(event.area)
 
-	def on_render(self, window, widget, background_area, expose_area, flags, other):
-		cr = window.cairo_create()
-		if other %2 ==0:
-			draw_bg(cr, 0x664433, background_area)
-		else:
-			draw_bg(cr, 0x664433, background_area)
-		
+		self.draw(cr)
+		return False
+	
+	def draw(self, cr):
+		draw_bg(cr, 0x558899, self.get_allocation())
 g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
 					"title":"Come Together"},
 				{"artist":"The Beatles", "album":"Abbey Road",

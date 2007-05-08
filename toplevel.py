@@ -5,8 +5,15 @@ import play_bar
 import play_controls
 import sys #used for command line
 import song_info
+import gtkwiid
 
-if(sys.argv[1] != ''):
+PLAYING = 0
+PAUSED = 1
+STOPPED = 2
+
+playmode = STOPPED
+
+if(len(sys.argv)>1):
 	song_list = song_info.get_song_list(sys.argv[1])
 else:
 	song_list = list_view.g_song_data
@@ -29,7 +36,7 @@ def quit_on_q(src, data=None):
 	elif(data.keyval == 117): #u moves selection up
 		main_list.change_selection(-1)
 	elif(data.keyval == 115): #s makes a selection
-		main_list.make_selection()
+		main_list.make_selection(src)
 	elif(data.keyval == 102): #f moves forward
 		main_list.move_forward()
 	elif(data.keyval == 98): #b moves backwards
@@ -40,12 +47,40 @@ def quit_on_q(src, data=None):
 		next_song = iplay_queue.dequeue()
 		iplay_bar.play_song(next_song)
 
+def playfunction(src):
+	global playmode
+	if playmode == STOPPED:
+		next_song = iplay_queue.dequeue()
+		iplay_bar.play_song(next_song)
+		playmode = PLAYING
+	elif playmode == PAUSED:
+		iplay_bar.resume_song()
+		playmode = PLAYING
+	else:
+		iplay_bar.pause_song()
+		playmode= PAUSED
+
 def main():
 	main_win = gtk.Window()
+	wii = gtkwiid.gtkWiimote()
 
 	#Allow us to quit by pressing 'q'
 	main_win.connect("destroy", destroy)
 	main_win.connect("key_press_event", quit_on_q)
+	wii.connect("selected", main_list.make_selection)
+	wii.connect("nav_forward", main_list.move_forward)
+	wii.connect("nav_back", main_list.move_backwards)
+	wii.connect("enqueue", main_list.enqueue_selection)
+	wii.connect("scroll", main_list.change_selection)
+	wii.connect("play_pressed", iplay_controls.play_pressed)
+	wii.connect("play_released", iplay_controls.play_released)
+	wii.connect("song_forward_pressed", iplay_controls.forward_pressed)
+	wii.connect("song_forward_released", iplay_controls.forward_released)
+	wii.connect("song_back_pressed", iplay_controls.back_pressed)
+	wii.connect("song_back_released", iplay_controls.back_released)
+	
+	#We need to replace this with logic that works
+	wii.connect("play_released", playfunction)
 
 	#This table will serve as the main layout container
 	main_table = gtk.Table(2, 2)

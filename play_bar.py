@@ -20,6 +20,12 @@ class play_bar(gtk.HBox):
 	def play_song(self, song):
 		self._details.song = song
 
+	def pause_song(self):
+		print "%s paused" % self._details.song["title"]
+	
+	def resume_song(self):
+		print "%s resumed" % self._details.song["title"]
+
 class PlayDetails(gtk.DrawingArea):
 	_song = {}
 	_bgcolor = 0x334466
@@ -42,6 +48,7 @@ class PlayDetails(gtk.DrawingArea):
 	
 	def get_song(self):
 		return self._song
+	
 	
 	song = property(lambda self: self.get_song(), lambda self, s: self.set_song(s))
 
