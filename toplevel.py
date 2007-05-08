@@ -70,6 +70,7 @@ def main():
 	wii.connect("selected", main_list.make_selection)
 	wii.connect("nav_forward", main_list.move_forward)
 	wii.connect("nav_back", main_list.move_backwards)
+	wii.connect("home", main_list.move_home)
 	wii.connect("enqueue", main_list.enqueue_selection)
 	wii.connect("scroll", main_list.change_selection)
 	wii.connect("play_pressed", iplay_controls.play_pressed)

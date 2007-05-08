@@ -133,6 +133,10 @@ class list_view(gtk.VBox):
 		elif(view == self.song_view):
 			self.set_current_view(self.album_view)
 			self.bread_crumb.move_backwards()
+	
+	def move_home(self, src):
+		self.bread_crumb.set_crumb(HOME_CRUMB, "Home")
+		self.set_current_view(self.artist_view)
 
 	def enqueue_selection(self, src):
 		view = self.current_view
