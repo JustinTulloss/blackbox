@@ -11,8 +11,11 @@ def get_song_list(path):
 		for file in files:
 			if(is_mp3.match(file) != None):
 				path = os.path.join(dir, file)
-
-				song = create_song_hash(path)
+				
+				try:
+					song = create_song_hash(path)
+				except:
+					continue
 				song_list.append(song)
 	
 	return song_list
@@ -24,9 +27,8 @@ def create_song_hash(path):
 	song = {"path":path}
 
 	for field in song_fields:
-		try:
-			song[field] = song_metadata[field][0]
-		except KeyError:
-			pass
+		song[field] = song_metadata[field][0]
+		if(len(song[field]) < 2):
+			raise BadTags
 	
 	return song

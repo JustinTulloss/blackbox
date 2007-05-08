@@ -2,6 +2,9 @@ import gtk
 import cairo
 from cairo_help import *
 
+import signal
+import os
+
 #This class shows what is playing and eventually should handle all music
 #It will need to dequeue songs from the song list when it needs them
 class play_bar(gtk.HBox):
@@ -17,8 +20,16 @@ class play_bar(gtk.HBox):
 
 		self.now_playing = None
 
+		self.mplayer_pid = None
+
 	def play_song(self, song):
+		print "Playing song now..."
 		self._details.song = song
+
+		if(self.mplayer_pid != None):
+			os.kill(self.mplayer_pid, signal.SIGKILL)
+
+		self.mplayer_pid = os.spawnlp(os.P_NOWAIT, 'mplayer', 'mplayer', song["path"])
 
 	def pause_song(self):
 		print "%s paused" % self._details.song["title"]

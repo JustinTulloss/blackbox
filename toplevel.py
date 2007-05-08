@@ -53,11 +53,11 @@ def quit_on_q(src, data=None):
 	elif(data.keyval == 115): #s makes a selection
 		main_list.make_selection(src)
 	elif(data.keyval == 102): #f moves forward
-		main_list.move_forward()
+		main_list.move_forward(src)
 	elif(data.keyval == 98): #b moves backwards
-		main_list.move_backwards()
+		main_list.move_backwards(src)
 	elif(data.keyval == 101): #e enqueues songs
-		main_list.enqueue_selection()
+		main_list.enqueue_selection(src)
 	elif(data.keyval == 114): #r dequeues (remove)
 		next_song = iplay_queue.dequeue()
 		iplay_bar.play_song(next_song)
@@ -95,7 +95,8 @@ def main():
 		wii.connect("song_back_released", iplay_controls.back_released)
 	
 		#We need to replace this with logic that works
-		wii.connect("play_released", playfunction)
+		wii.connect("play_released", playfunction) 
+		wii.connect("song_forward_released", iplay_queue.dequeue)
 	
 	#Allow us to quit by pressing 'q'
 	main_win.connect("destroy", destroy)

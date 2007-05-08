@@ -169,9 +169,11 @@ class RubiListStore(gtk.TreeView):
 	def draw(self, cr):
 		draw_bg(cr, 0x558899, self.get_allocation())
 g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
-					"title":"Come Together"},
+					"title":"Come Together",
+					"path":"/home/brian/machome/Music/Abbey Road/01 Come Together.mp3"},
 				{"artist":"The Beatles", "album":"Abbey Road",
-					"title":"Polythene Pam"},
+					"title":"Polythene Pam",
+					"path":"/home/brian/machome/Music/Abbey Road/12 Polythene Pam.mp3"},
 				{"artist":"Led Zeppelin", "album":"IV", "title":"Black Dog"},
 				{"artist":"Led Zeppelin", "album":"II", "title":"Ramble On"},
 				{"artist":"Andrew Bird", 
