@@ -47,9 +47,9 @@ def quit_on_q(src, data=None):
 	if(data.keyval == 113): #113 is ascii code for q, don't ask
 		destroy(src)
 	elif(data.keyval == 100): #d moves selection down
-		main_list.change_selection(1)
+		main_list.change_selection(None, 1, None)
 	elif(data.keyval == 117): #u moves selection up
-		main_list.change_selection(-1)
+		main_list.change_selection(None, -1, None)
 	elif(data.keyval == 115): #s makes a selection
 		main_list.make_selection(src)
 	elif(data.keyval == 102): #f moves forward
@@ -60,13 +60,11 @@ def quit_on_q(src, data=None):
 		main_list.enqueue_selection(src)
 	elif(data.keyval == 114): #r dequeues (remove)
 		next_song = iplay_queue.dequeue()
-		iplay_bar.play_song(next_song)
 
 def playfunction(src):
 	global playmode
 	if playmode == STOPPED:
-		next_song = iplay_queue.dequeue()
-		iplay_bar.play_song(next_song)
+		iplay_queue.dequeue()
 		playmode = PLAYING
 	elif playmode == PAUSED:
 		iplay_bar.resume_song()
@@ -124,6 +122,9 @@ def main():
 
 	#Connect components
 	main_list.play_queue = iplay_queue
+	iplay_bar.connect("song_ended", iplay_queue.dequeue)
+	iplay_queue.connect("play_song", iplay_bar.play_song)
+	main_list.connect("play_song", iplay_bar.play_song)
 
 	#Display window
 	main_win.fullscreen()

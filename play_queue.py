@@ -10,6 +10,9 @@ class play_queue(gtk.EventBox):
 	_vbox = gtk.VBox()
 	_bgcolor = 0x334466
 	
+	__gsignals__ = dict(play_song=(gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, \
+			(gobject.TYPE_PYOBJECT,)))
+
 	def __init__(self):
 		super(play_queue, self).__init__() 
 
@@ -65,7 +68,10 @@ class play_queue(gtk.EventBox):
 			
 			self.song_list.append(song)
 
-	def dequeue(self):
+	def dequeue(self, widget=None):
+		if(len(self.song_list) < 1):
+			return
+
 		store = self.queue_store
 		ilast = store.iter_n_children(None)
 		last = store.iter_nth_child(None, ilast-1)
@@ -75,7 +81,7 @@ class play_queue(gtk.EventBox):
 
 		store.remove(last)
 
-		return self.song_list.pop(0)
+		self.emit("play_song", self.song_list.pop(0))
 	
 ######################event handlers################
 	def expose(self, widget, event):

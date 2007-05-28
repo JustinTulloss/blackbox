@@ -8,11 +8,15 @@ import gtk
 import breadcrumb
 from cairo_help import *
 import song_info
+import gobject
 
 (TITLE_COL, ARTIST_COL, ALBUM_COL, PATH_COL)= range(4)
 (HOME_CRUMB, ARTIST_CRUMB, ALBUM_CRUMB) = range(3)
 
 class list_view(gtk.VBox):
+	__gsignals__ = dict(play_song=(gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, \
+			(gobject.TYPE_PYOBJECT,)))
+
 	def __init__(self, song_data):
 		super(list_view, self).__init__()
 
@@ -102,7 +106,7 @@ class list_view(gtk.VBox):
 		elif(view == self.song_view): #Play song
 			songs = [x for x in self.song_data if x["title"]==val]
 			song = songs[0]
-			print "Song "+song["title"]+" selected"
+			self.emit("play_song", song)
 
 	def set_current_view(self, new_view):
 		self.scrolled_window.remove(self.current_view)
@@ -168,6 +172,7 @@ class RubiListStore(gtk.TreeView):
 	
 	def draw(self, cr):
 		draw_bg(cr, 0x558899, self.get_allocation())
+
 g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
 					"title":"Come Together",
 					"path":"/home/brian/machome/Music/Abbey Road/01 Come Together.mp3"},

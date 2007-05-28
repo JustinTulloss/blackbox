@@ -101,7 +101,7 @@ class gtkWiimote(gtk.Widget):
 		if (a_x>X_THRESHOLD and b_on and (self._xabove == False)):
 
 			self._xabove = True
-			self.emit("enqueue")
+			gobject.idle_add(self.emit, "enqueue")
 
 		if (a_x<X_THRESHOLD and self._xabove == True):
 			self._xabove = False
@@ -109,19 +109,19 @@ class gtkWiimote(gtk.Widget):
 		if (a_x<-X_THRESHOLD and b_on and (self._xbelow == False)):
 			
 			self.xabove = True
-			self.emit("dequeue")
+			gobject.idle_add(self.emit, "dequeue")
 		
 		if pitch>PITCH_THRESHOLD and self._no_scroll == False and not b_on:
 			self._no_scroll=True;
 			t = threading.Timer(.4-.2*pitch, self.scroll_again)
 			t.start()
-			self.emit("scroll", 1, 0)
+			gobject.idle_add(self.emit, "scroll", 1, 0)
 
 		if pitch<-PITCH_THRESHOLD and self._no_scroll == False and not b_on:
 			self._no_scroll=True;
-			t = threading.Timer(.4-.2*pitch, self.scroll_again)
+			t = threading.Timer(.1-.1*pitch, self.scroll_again)
 			t.start()
-			self.emit("scroll", -1, 0)
+			gobject.idle_add(self.emit, "scroll", -1, 0)
 	
 	def scroll_again(self):
 		self._no_scroll = False
@@ -133,29 +133,29 @@ class gtkWiimote(gtk.Widget):
 		self._btnmask = btns
 
 		if(btns & cwiid.BTN_A):
-			self.emit("selected")
+			gobject.idle_add(self.emit, "selected")
 		if(btns & cwiid.BTN_HOME):
-			self.emit("home")
+			gobject.idle_add(self.emit, "home")
 
 		if(btns & cwiid.BTN_UP):
-			self.emit("play_pressed")
+			gobject.idle_add(self.emit, "play_pressed")
 		elif(omask & cwiid.BTN_UP):
-			self.emit("play_released")
+			gobject.idle_add(self.emit, "play_released")
 
 		if(btns & cwiid.BTN_RIGHT):
-			self.emit("song_forward_pressed")
+			gobject.idle_add(self.emit, "song_forward_pressed")
 		elif(omask & cwiid.BTN_RIGHT):
-			self.emit("song_forward_released")
+			gobject.idle_add(self.emit, "song_forward_released")
 		
 		if(btns & cwiid.BTN_LEFT):
-			self.emit("song_back_pressed")
+			gobject.idle_add(self.emit, "song_back_pressed")
 		elif(omask & cwiid.BTN_LEFT):
-			self.emit("song_back_released")
+			gobject.idle_add(self.emit, "song_back_released")
 
 		if(btns & cwiid.BTN_MINUS):
-			self.emit("nav_back")
+			gobject.idle_add(self.emit, "nav_back")
 		if(btns & cwiid.BTN_PLUS):
-			self.emit("nav_forward")
+			gobject.idle_add(self.emit, "nav_forward")
 		
 
 if __name__ == "__main__":

@@ -1,16 +1,19 @@
 import gtk
 import cairo
 from cairo_help import *
+import gobject
 
 import signal
 import os
+
+import pygst
+import gst
 
 #This class shows what is playing and eventually should handle all music
 #It will need to dequeue songs from the song list when it needs them
 class play_bar(gtk.HBox):
 
-	#__gsignals__ = dict(new_song=(gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE,
-	#					(gobject.TYPE_PYOBJECT, gobject.TYPE_INT)))
+	__gsignals__ = dict(song_ended=(gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, () ))
 
 	def __init__(self):
 		super(play_bar, self).__init__()
@@ -20,22 +23,39 @@ class play_bar(gtk.HBox):
 
 		self.now_playing = None
 
-		self.mplayer_pid = None
+		self.player = gst.element_factory_make("playbin", "my-playbin")
+		
+		bus = self.player.get_bus()
+		bus.add_signal_watch()
+		bus.connect('message', self.gst_message)
 
-	def play_song(self, song):
+	def __del__(self):
+		self.player.set_state(gst.STATE_NULL)
+
+	def play_song(self, widget, song):
 		print "Playing song now..."
 		self._details.song = song
-
-		if(self.mplayer_pid != None):
-			os.kill(self.mplayer_pid, signal.SIGKILL)
-
-		self.mplayer_pid = os.spawnlp(os.P_NOWAIT, 'mplayer', 'mplayer', song["path"])
+		
+		self.player.set_state(gst.STATE_NULL)
+		
+		self.player.set_property('uri', 'file://'+song['path'])
+		self.player.set_state(gst.STATE_PLAYING)
 
 	def pause_song(self):
+		self.player.set_state(gst.STATE_PAUSED)
 		print "%s paused" % self._details.song["title"]
 	
 	def resume_song(self):
+		self.player.set_state(gst.STATE_PLAYING)
 		print "%s resumed" % self._details.song["title"]
+
+	def change_song(self, song):
+		self.player.set_property('uri', 'file://'+song['path'])
+
+	def gst_message(self, bus, message):
+		t = message.type
+		if t == gst.MESSAGE_EOS:
+			gobject.idle_add(self.emit, "song_ended")
 
 class PlayDetails(gtk.DrawingArea):
 	_song = {}
