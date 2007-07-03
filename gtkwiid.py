@@ -51,9 +51,9 @@ class gtkWiimote(gtk.Widget):
 
 	def __init__(self):
 		super(gtkWiimote, self).__init__()
-		self._mote = cwiid.Wiimote(cwiid.FLAG_MESG_IFC)
-		self._mote.command(cwiid.CMD_RPT_MODE, cwiid.RPT_BTN|cwiid.RPT_ACC)
-		self._mote.set_callback(self.cwiidCallback)
+		self._mote = cwiid.Wiimote(flags=cwiid.FLAG_MESG_IFC)
+		self._mote.rpt_mode = cwiid.RPT_BTN|cwiid.RPT_ACC
+		self._mote.mesg_callback = self.cwiidCallback
 
 		#state machine variables
 		self._xabove = False
@@ -76,10 +76,12 @@ class gtkWiimote(gtk.Widget):
 			if self._actions.has_key(msg[0]):
 				self._actions[msg[0]](msg[1])
 	
-	def acc_cllbck(self, accdict):
-		x = float(accdict["x"])
-		y = float(accdict["y"])
-		z = float(accdict["z"])
+	def acc_cllbck(self, accs):
+		(xi, yi, zi) = accs
+		
+		x = float(xi)
+		y = float(yi)
+		z = float(zi)		
 
 		#Weight the accelerations according to calibration data and
 		#center around 0
@@ -127,8 +129,10 @@ class gtkWiimote(gtk.Widget):
 		self._no_scroll = False
 			
 
-	def btn_cllbck(self, btndict):
-		btns = btndict["buttons"]
+	def btn_cllbck(self, btns):
+		#print type(btndict)	
+		#print dir(btndict)
+
 		omask = self._btnmask
 		self._btnmask = btns
 
