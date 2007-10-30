@@ -1,0 +1,31 @@
+development - 0.7
+
+  * Removed RSA MD5 hasher, used Colin Plumb's public domain implementation.
+  
+2007-03-12 - 0.6
+
+  * Added 'password' param to the connect call, code by Aren Olson.
+  * License metainformation in the setup.py script, and shipped by manifest.
+  * Updated README to properly include RSA license terms.
+
+2007-01-30	Tom Insam <tom@jerakeen.org>
+
+  * Added daap.songgenre, daap.songyear, and daap.songtracknumber to the
+    meta information retrieved by the client.
+
+2006-10-11	Tom Insam <tom@jerakeen.org>
+
+  * At the request of philippe.normand@gmail.com, explicitly licensed
+    the code under the LGPL.
+  
+  * Accepted a patch from Peter Stanford <Peter.Sanford@wheaton.edu> to
+    properly return the sizes of remote files.
+  
+2006-08-06	Tom Insam <tom@jerakeen.org>
+
+  * I create a changelog file.
+
+  * added Fernando Herrera's patch to reconnect to the server on every
+    request instead of holding a socket open, so we can stream from
+    Tangerine.
+

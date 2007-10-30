@@ -1,11 +1,12 @@
 import gtk
-import list_view
-import play_queue
-import play_bar
-import play_controls
+from ui import list_view
+from ui import play_queue
+from ui import play_bar
+from ui import play_controls
+from ui import song_info
+import model
 import sys #used for command line
-import song_info
-import gtkwiid
+from cwiid import gtkwiid
 import getopt
 
 PLAYING = 0
@@ -20,15 +21,17 @@ playmode = STOPPED
 #	song_list = list_view.g_song_data
 
 argv = sys.argv[1:]
-optlist, args = getopt.getopt(argv, "f:w", ["files=", "use-wiimote"])
+optlist, args = getopt.getopt(argv, "f:w:d", ["daap", "files=", "use-wiimote"])
 
 use_wii = False
 song_list = None
 for opt, arg in optlist:
 	if opt in("-w", "--use-wiimote"):
 		use_wii = True
-	elif opt in ("-f", "--files"):
+	if opt in ("-f", "--files"):
 		song_list = song_info.get_song_list(arg)
+	elif opt in ("-d", "--daap"):
+		song_list = model.MusicData()
 
 if song_list == None:
 	song_list = list_view.g_song_data

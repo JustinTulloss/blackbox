@@ -31,7 +31,10 @@ class list_view(gtk.VBox):
 		#self.renderer = ListRenderer()
 
 		self.song_data = song_data
-		self.artist_view = self.create_view(song_data, "artist", "Artists")
+
+		self.song_data.connect("add_tracks", self._update_view)
+
+		self.artist_view = self.create_view(song_data.query(), "artist", "Artists")
 		self.current_view = self.artist_view
 
 		self.album_view = None
@@ -55,7 +58,7 @@ class list_view(gtk.VBox):
 		"""Creates a list store based on one field, and removed duplicates"""
 		val_list = []
 		for song in song_data:
-			val_list.append(song[col_name])
+			val_list.append(getattr(song,col_name))
 
 		val_list = sorted(set(val_list))
 		
@@ -92,19 +95,21 @@ class list_view(gtk.VBox):
 		val = store.get_value(iter, 0)
 
 		if(view == self.artist_view): #Goto album view
-			new_data = [x for x in self.song_data if x["artist"]==val]
+			#new_data = [x for x in self.song_data if getattr(x, "artist")==val]
+			print type(self.song_data)
+			new_data = self.song_data.query(artist=val)
 			self.album_view = self.create_view(new_data, "album", "Albums")
 			self.set_current_view(self.album_view)
 
 			self.bread_crumb.set_crumb(ARTIST_CRUMB, val)
 		elif(view == self.album_view): #Goto song view
-			new_data = [x for x in self.song_data if x["album"]==val]
+			new_data = [x for x in self.song_data if getattr(x,"album")==val]
 			self.song_view = self.create_view(new_data, "title", "Songs")
 			self.set_current_view(self.song_view)
 
 			self.bread_crumb.set_crumb(ALBUM_CRUMB, val)
 		elif(view == self.song_view): #Play song
-			songs = [x for x in self.song_data if x["title"]==val]
+			songs = [x for x in self.song_data if getattr(x,"title")==val]
 			song = songs[0]
 			self.emit("play_song", song)
 
@@ -149,14 +154,18 @@ class list_view(gtk.VBox):
 		val = store.get_value(iter, 0)
 
 		if(view == self.artist_view):
-			songs = [x for x in self.song_data if x["artist"]==val]
+			songs = [x for x in self.song_data if getattr(x,"artist")==val]
 			self.play_queue.enqueue(songs)
 		elif(view == self.album_view):
-			songs = [x for x in self.song_data if x["album"]==val]
+			songs = [x for x in self.song_data if getattr(x,"album")==val]
 			self.play_queue.enqueue(songs)
 		elif(view == self.song_view):
-			songs = [x for x in self.song_data if x["title"]==val]
+			songs = [x for x in self.song_data if getattr(x,"title")==val]
 			self.play_queue.enqueue(songs)
+	
+	def _update_view(self, data):
+		self.artist_view = self.create_view(data.query(), "artist", "Artist")
+		self.set_current_view(self.artist_view)
 
 class RubiListStore(gtk.TreeView):
 	def __init__(self):
