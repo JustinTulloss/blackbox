@@ -31,10 +31,11 @@ class list_view(gtk.VBox):
 		#self.renderer = ListRenderer()
 
 		self.song_data = song_data
+		
+		if hasattr(self.song_data, "connect"):
+			self.song_data.connect("add_tracks", self._update_view)
 
-		self.song_data.connect("add_tracks", self._update_view)
-
-		self.artist_view = self.create_view(song_data.query(), "artist", "Artists")
+		self.artist_view = self.create_view("artist", "Artists")
 		self.current_view = self.artist_view
 
 		self.album_view = None
@@ -42,8 +43,8 @@ class list_view(gtk.VBox):
 
 		self.scrolled_window.add(self.artist_view)
 	
-	def create_view(self, song_data, col_name, col_header):
-		store = self.create_store(song_data, col_name)
+	def create_view(self, col_name, col_header, filters={}):
+		store = self.create_store(col_name, filters)
 
 		view = gtk.TreeView(store)
 
@@ -54,10 +55,10 @@ class list_view(gtk.VBox):
 
 		return view
 
-	def create_store(self, song_data, col_name):
+	def create_store(self, col_name, filters={}):
 		"""Creates a list store based on one field, and removed duplicates"""
 		val_list = []
-		for song in song_data:
+		for song in self.song_data.query(filters):
 			val_list.append(getattr(song,col_name))
 
 		val_list = sorted(set(val_list))
@@ -96,20 +97,18 @@ class list_view(gtk.VBox):
 
 		if(view == self.artist_view): #Goto album view
 			#new_data = [x for x in self.song_data if getattr(x, "artist")==val]
-			print type(self.song_data)
-			new_data = self.song_data.query(artist=val)
-			self.album_view = self.create_view(new_data, "album", "Albums")
+			self.album_view = self.create_view("album", "Albums", dict(artist=val))
 			self.set_current_view(self.album_view)
 
 			self.bread_crumb.set_crumb(ARTIST_CRUMB, val)
 		elif(view == self.album_view): #Goto song view
-			new_data = [x for x in self.song_data if getattr(x,"album")==val]
-			self.song_view = self.create_view(new_data, "title", "Songs")
+			#new_data = [x for x in self.song_data if getattr(x,"album")==val]
+			self.song_view = self.create_view("title", "Songs", dict(album=val))
 			self.set_current_view(self.song_view)
 
 			self.bread_crumb.set_crumb(ALBUM_CRUMB, val)
 		elif(view == self.song_view): #Play song
-			songs = [x for x in self.song_data if getattr(x,"title")==val]
+			#songs = [x for x in self.song_data if getattr(x,"title")==val]
 			song = songs[0]
 			self.emit("play_song", song)
 
@@ -182,17 +181,54 @@ class RubiListStore(gtk.TreeView):
 	def draw(self, cr):
 		draw_bg(cr, 0x558899, self.get_allocation())
 
-g_song_data = [{"artist":"The Beatles", "album":"Abbey Road",
-					"title":"Come Together",
-					"path":"/home/brian/machome/Music/Abbey Road/01 Come Together.mp3"},
-				{"artist":"The Beatles", "album":"Abbey Road",
-					"title":"Polythene Pam",
-					"path":"/home/brian/machome/Music/Abbey Road/12 Polythene Pam.mp3"},
-				{"artist":"Led Zeppelin", "album":"IV", "title":"Black Dog"},
-				{"artist":"Led Zeppelin", "album":"II", "title":"Ramble On"},
-				{"artist":"Andrew Bird", 
-					"album":"The Mysterious Production of Eggs",
-					"title":"MX Missiles"}]
+class MockData:
+	"""This mimics the model's interface, probably should be in there"""
+
+	artist = None
+	album = None
+	title = None
+	path = None
+	
+	def __init__(self, **kwargs):
+		for arg in kwargs.keys():
+			setattr(self, arg, kwargs[arg])
+
+
+class MockModel:
+	def __init__(self):
+		self._tracks= [MockData(artist="The Beatles",
+		 						album="Abbey Road",
+								title="Come Together",
+								path="/home/brian/machome/Music/Abbey Road/01 Come Together.mp3"),
+					MockData(artist="The Beatles",
+							album="Abbey Road",
+							title="Polythene Pam",
+							path="/home/brian/machome/Music/Abbey Road/12 Polythene Pam.mp3"),
+					MockData(artist="Led Zeppelin",
+							album="IV",
+							title="Black Dog"),
+					MockData(artist="Led Zeppelin",
+							album="II",
+							title="Black Dog"),
+					MockData(artist="Andrew Bird",
+							album="The Mysterious Production of Eggs",
+							title="MX Missiles")]
+
+	def query(self, filters={}):
+		"""Finds a list of songs that match the 
+		arbitrary number of filters passed in"""
+		def ffunc(track):
+			"""Filter function goes through each filter condition and
+			sees if the DAAPTrack matches"""
+			match = True
+			for key in filters.keys():
+				if not getattr(track, key) == filters[key]:
+					return False
+			return True
+
+		return filter(ffunc, self._tracks)
+
+g_song_data = MockModel()
 
 def test():
 	main_win = gtk.Window()

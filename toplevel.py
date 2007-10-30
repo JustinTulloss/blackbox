@@ -6,7 +6,6 @@ from ui import play_controls
 from ui import song_info
 import model
 import sys #used for command line
-from cwiid import gtkwiid
 import getopt
 
 PLAYING = 0
@@ -27,6 +26,7 @@ use_wii = False
 song_list = None
 for opt, arg in optlist:
 	if opt in("-w", "--use-wiimote"):
+		from cwiid import gtkwiid
 		use_wii = True
 	if opt in ("-f", "--files"):
 		song_list = song_info.get_song_list(arg)

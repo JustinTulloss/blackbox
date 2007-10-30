@@ -7,7 +7,7 @@ SO_NAME = $(NAME).so
 OBJECTS = $(SOURCES:.c=.o)
 
 LDLIBS += -lcwiid
-CFLAGS = -fpic -Wall -g -I/usr/include/python2.4
+CFLAGS = -fpic -Wall -g -I/usr/include/python2.5
 LDFLAGS = -shared -fpic
 
 $(SO_NAME): $(OBJECTS)

@@ -70,7 +70,7 @@ class MusicData(gtk.Widget):
             interface, protocol, name, type, domain, 
             avahi.PROTO_UNSPEC, dbus.UInt32(0)
         )
-        #print "Found service '%s' of type '%s' in domain '%s' at address '%s:%s'" % (name, type, domain, address, port)
+        print "Found service '%s' of type '%s' in domain '%s' at address '%s:%s'" % (name, type, domain, address, port)
         self.add_server(address)
         gobject.idle_add(self.emit, "add_tracks")
 
@@ -87,7 +87,7 @@ class MusicData(gtk.Widget):
         try:
             dbs = sd.session.databases()
         except:
-            return #avoid problems with itunes 7
+            return #avoid problems with itunes 7 by ignoring them
 
         for db in dbs:
             if (str(db.id) == str(sd.session.library().id)):
@@ -101,16 +101,15 @@ class MusicData(gtk.Widget):
         bad.session.logout()
 		#TODO:remove from the tracks listing
     
-    #TODO: Put a real database behind this. This is rediculously slow.
-    def query(self, **kwargs):
+    def query(self, filters={}):
         """Finds a list of songs that match the 
         arbitrary number of filters passed in"""
         def ffunc(track):
             """Filter function goes through each filter condition and
             sees if the DAAPTrack matches"""
             match = True
-            for key in kwargs.keys():
-                if not getattr(track, key) == kwargs[key]:
+            for key in filters.keys():
+                if not getattr(track, key) == filters[key]:
                     return False
             return True
 
