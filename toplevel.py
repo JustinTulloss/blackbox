@@ -4,7 +4,6 @@ from ui import play_queue
 from ui import play_bar
 from ui import play_controls
 from ui import song_info
-import model
 import sys #used for command line
 import getopt
 
@@ -31,10 +30,12 @@ for opt, arg in optlist:
 	if opt in ("-f", "--files"):
 		song_list = song_info.get_song_list(arg)
 	elif opt in ("-d", "--daap"):
-		song_list = model.MusicData()
+		from model import daapmodel 
+		song_list = daapmodel.DaapModel()
 
 if song_list == None:
-	song_list = list_view.g_song_data
+	from model import mockmodel
+	song_list = mockmodel.MockModel()
 
 #Various widgets
 main_list = list_view.list_view(song_list)

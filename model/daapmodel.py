@@ -8,31 +8,22 @@
 """Module to aggregate every DAAP service we can find"""
 
 from daap import DAAPClient
-import gtk
+from basemodel import BaseModel
 import gobject
 import dbus
 import avahi
 import dbus.glib
 
-class MusicData(gtk.Widget):
-
-    #signals that indicate that you should probably update your view
-    __gsignals__ = dict(
-                add_tracks=(gobject.SIGNAL_RUN_FIRST,
-                      gobject.TYPE_NONE,()),
-                remove_tracks=(gobject.SIGNAL_RUN_FIRST,
-                      gobject.TYPE_NONE,()))
+class DaapModel(BaseModel):
 
     class DaapData(object):
         client = None
         session = None
         database = None
 
-    _tracks = []
-
     def __init__(self):
         """Make a new music data provider."""
-        super(MusicData, self).__init__()
+        super(DaapModel, self).__init__()
 
         #### avahi discovery registration ####
         self._bus = dbus.SystemBus()
@@ -101,21 +92,6 @@ class MusicData(gtk.Widget):
         bad.session.logout()
 		#TODO:remove from the tracks listing
     
-    def query(self, filters={}):
-        """Finds a list of songs that match the 
-        arbitrary number of filters passed in"""
-        def ffunc(track):
-            """Filter function goes through each filter condition and
-            sees if the DAAPTrack matches"""
-            match = True
-            for key in filters.keys():
-                if not getattr(track, key) == filters[key]:
-                    return False
-            return True
-
-        return filter(ffunc, self._tracks)
-
-
 if __name__=="__main__":
     import gobject
     md = MusicData()
