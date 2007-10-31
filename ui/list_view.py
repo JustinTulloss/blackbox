@@ -103,7 +103,7 @@ class list_view(gtk.VBox):
 			self.bread_crumb.set_crumb(ARTIST_CRUMB, val)
 		elif(view == self.album_view): #Goto song view
 			#new_data = [x for x in self.song_data if getattr(x,"album")==val]
-			self.song_view = self.create_view("title", "Songs", dict(album=val))
+			self.song_view = self.create_view("name", "Songs", dict(album=val))
 			self.set_current_view(self.song_view)
 
 			self.bread_crumb.set_crumb(ALBUM_CRUMB, val)
@@ -153,17 +153,20 @@ class list_view(gtk.VBox):
 		val = store.get_value(iter, 0)
 
 		if(view == self.artist_view):
-			songs = [x for x in self.song_data if getattr(x,"artist")==val]
+			#songs = [x for x in self.song_data if getattr(x,"artist")==val]
+			songs = self.song_data.query(dict(artist=val))
 			self.play_queue.enqueue(songs)
 		elif(view == self.album_view):
-			songs = [x for x in self.song_data if getattr(x,"album")==val]
+			#songs = [x for x in self.song_data if getattr(x,"album")==val]
+			songs = self.song_data.query(dict(album=val))
 			self.play_queue.enqueue(songs)
 		elif(view == self.song_view):
-			songs = [x for x in self.song_data if getattr(x,"title")==val]
+			#songs = [x for x in self.song_data if getattr(x,"name")==val]
+			songs = self.song_data.query(dict(name=val))
 			self.play_queue.enqueue(songs)
 	
 	def _update_view(self, data):
-		self.artist_view = self.create_view(data.query(), "artist", "Artist")
+		self.artist_view = self.create_view("artist", "Artist")
 		self.set_current_view(self.artist_view)
 
 class RubiListStore(gtk.TreeView):
@@ -186,7 +189,7 @@ class MockData:
 
 	artist = None
 	album = None
-	title = None
+	name= None
 	path = None
 	
 	def __init__(self, **kwargs):
@@ -198,21 +201,21 @@ class MockModel:
 	def __init__(self):
 		self._tracks= [MockData(artist="The Beatles",
 		 						album="Abbey Road",
-								title="Come Together",
+								name="Come Together",
 								path="/home/brian/machome/Music/Abbey Road/01 Come Together.mp3"),
 					MockData(artist="The Beatles",
 							album="Abbey Road",
-							title="Polythene Pam",
+							name="Polythene Pam",
 							path="/home/brian/machome/Music/Abbey Road/12 Polythene Pam.mp3"),
 					MockData(artist="Led Zeppelin",
 							album="IV",
-							title="Black Dog"),
+							name="Black Dog"),
 					MockData(artist="Led Zeppelin",
 							album="II",
-							title="Black Dog"),
+							name="Black Dog"),
 					MockData(artist="Andrew Bird",
 							album="The Mysterious Production of Eggs",
-							title="MX Missiles")]
+							name="MX Missiles")]
 
 	def query(self, filters={}):
 		"""Finds a list of songs that match the 

@@ -157,22 +157,22 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		tasc, tdesc, theight, tmax_x, tmax_y = cr.font_extents()
 		cr.move_to(.1, theight+.1)
-		cr.show_text(self._text["title"])
+		cr.show_text(self._text.name)
 		cr.stroke()
 		cr.set_font_size(.15)
 		cr.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		#artist
-		if self._text.has_key("artist"):
+		if hasattr(self._text,"artist"):
 			aasc, adesc, aheight, amax_x, amax_y = cr.font_extents()
 			cr.move_to(.2, aheight+theight+.1)
-			cr.show_text(self._text["artist"])
+			cr.show_text(self._text.artist)
 			cr.stroke()
 
 		#album
-		if self._text.has_key("album"):
+		if hasattr(self._text, "album"):
 			lasc, ldesc, lheight, lmax_x, lmax_y = cr.font_extents()
 			cr.move_to(.2, lheight+aheight+theight+.1)
-			cr.show_text(self._text["album"])
+			cr.show_text(self._text.album)
 			cr.stroke()
 
 		cr.restore()
