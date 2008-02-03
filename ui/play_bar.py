@@ -6,6 +6,7 @@ import gobject
 import signal
 import os
 
+#playback modules
 import pygst
 import gst
 
@@ -23,34 +24,39 @@ class play_bar(gtk.HBox):
 
 		self.now_playing = None
 
-		self.player = gst.element_factory_make("playbin", "my-playbin")
-		
-		bus = self.player.get_bus()
+		self.pipeline = gst.element_factory_make("playbin", "my-playbin")
+
+		bus = self.pipeline.get_bus()
 		bus.add_signal_watch()
 		bus.connect('message', self.gst_message)
 
 	def __del__(self):
 		self.player.set_state(gst.STATE_NULL)
+		
+	def new_decode_pad(dbin, pad, islast):
+		pad.link(self.convert.get_pad("sink"))
 
 	def play_song(self, widget, song):
 		print "Playing song now..."
 		self._details.song = song
 		
-		self.player.set_state(gst.STATE_NULL)
+		self.pipeline.set_state(gst.STATE_NULL)
 		
-		self.player.set_property('uri', 'file://'+song['path'])
-		self.player.set_state(gst.STATE_PLAYING)
+		songurl = song.request_url()
+		self.pipeline.set_property('uri', songurl)
+		self.pipeline.set_state(gst.STATE_PLAYING)
 
 	def pause_song(self):
 		self.player.set_state(gst.STATE_PAUSED)
-		print "%s paused" % self._details.song["title"]
+		print "%s paused" % self._details.song.title
 	
 	def resume_song(self):
 		self.player.set_state(gst.STATE_PLAYING)
-		print "%s resumed" % self._details.song["title"]
+		print "%s resumed" % self._details.song.title
 
 	def change_song(self, song):
-		self.player.set_property('uri', 'file://'+song['path'])
+		songurl = song.request_url()
+		self.pipeline.set_property('uri', songurl)
 
 	def gst_message(self, bus, message):
 		t = message.type
@@ -117,7 +123,7 @@ class PlayDetails(gtk.DrawingArea):
 
 		dispbgcolor = 0xfeffbf #TODO: Make this not hardcoded
 		dbc = cairo_color(dispbgcolor)
-		cr.rectangle(.1,.166, .75,.66)
+		cr.rectangle(.1,.166,.75,.66)
 		#save off this size for fonts
 		self._dispcorner = cr.user_to_device(.1,.25)
 		self._dispdim = cr.user_to_device_distance(.75, .5)
@@ -147,8 +153,8 @@ class PlayDetails(gtk.DrawingArea):
 		#self._song = {"title": "Title", "artist":"Artist", "album": "Album"}
 
 		#draw title
-		if self.song.has_key("title"):
-			title = self.song["title"]
+		if hasattr(self.song,"name"):
+			title = self.song.name
 		else:
 			title = "Rubicon Music Player"
 
@@ -164,14 +170,14 @@ class PlayDetails(gtk.DrawingArea):
 		cr.stroke()
 
 		#draw other string
-		if self.song.has_key("artist") and self.song.has_key("album"):
-			infostring = self.song["artist"] + " - " + self.song["album"]
-		elif self.song.has_key("artist"):
-			infostring = self.song["artist"]
-		elif self.song.has_key("album"):
-			infostring = self.song["album"]
+		if hasattr(self.song,"artist") and hasattr(self.song,"album"):
+			infostring = self.song.artist+ " - " + self.song.album
+		elif hasattr(self.song,"artist"):
+			infostring = self.song.artist
+		elif hasattr(self.song, "album"):
+			infostring = self.song.album
 		else:
-			infostring = "The free, legal, user friendly music sharing software"
+			infostring = "The free, legal, user friendly music swapping software"
 
 		cr.set_font_size(self._dispdim[1]/5)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL,

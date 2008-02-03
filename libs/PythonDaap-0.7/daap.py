@@ -367,6 +367,16 @@ class DAAPClient(object):
         self.getContentCodes() # practically required
         self.getInfo() # to determine the remote server version
 
+    def get_url(self, r, params = {}):
+        if params:
+            l = ['%s=%s' % (k, v) for k, v in params.iteritems()]
+            r = '%s?%s' % (r, '&'.join(l))
+
+        url =  'http://%s:%s%s' % (self.hostname, self.port, r)
+        log.debug(url)
+        return url
+
+        
     def _get_response(self, r, params = {}, gzip = 1):
         """Makes a request, doing the right thing, returns the raw data"""
 
@@ -400,9 +410,9 @@ class DAAPClient(object):
             headers[ 'Client-DAAP-Validation' ] = hash_v3(r, 2, self.request_id)
 
 	
-	# there are servers that don't allow >1 download from a single HTTP
-	# session, or something. Reset the connection each time. Thanks to
-	# Fernando Herrera for this one.
+        # there are servers that don't allow >1 download from a single HTTP
+        # session, or something. Reset the connection each time. Thanks to
+        # Fernando Herrera for this one.
         self.socket.close()
         self.socket.connect()
 
@@ -588,6 +598,13 @@ class DAAPTrack(object):
             gzip = 0,
         )
 
+    def request_url(self):
+        return self.database.session.connection.get_url(
+            "/databases/%s/items/%s.%s"%(self.database.id, self.id, self.type),
+            { 'session-id':self.database.session.sessionid },
+        )
+        
+
     def save(self, filename):
         """saves the file to 'filename' on the local machine"""
         log.debug("saving to '%s'", filename)
@@ -611,7 +628,7 @@ if __name__ == '__main__':
         # I'm new to this python thing. There's got to be a better idiom
         # for this.
         try: host = sys.argv[1]
-        except IndexError: host = "localhost"
+        except IndexError: host = "192.168.1.85"
         try: port = sys.argv[2]
         except IndexError: port = 3689
 
@@ -636,6 +653,7 @@ if __name__ == '__main__':
             #tracks[0].save("track.mp3")
 
             tracks[0].atom.printTree()
+            print tracks[32].request_url()
 
         finally:
             # this here, so we logout even if there's an error somewhere,

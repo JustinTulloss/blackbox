@@ -25,7 +25,7 @@ use_wii = False
 song_list = None
 for opt, arg in optlist:
 	if opt in("-w", "--use-wiimote"):
-		from cwiid import gtkwiid
+		from gtkwiid import gtkwiid
 		use_wii = True
 	if opt in ("-f", "--files"):
 		song_list = song_info.get_song_list(arg)

@@ -9,6 +9,7 @@
 
 from daap import DAAPClient
 from basemodel import BaseModel
+import logging
 import gobject
 import dbus
 import avahi
@@ -24,6 +25,8 @@ class DaapModel(BaseModel):
     def __init__(self):
         """Make a new music data provider."""
         super(DaapModel, self).__init__()
+        logging.basicConfig(level=logging.DEBUG)
+        self._log = logging.getLogger(__name__)
 
         #### avahi discovery registration ####
         self._bus = dbus.SystemBus()
@@ -54,6 +57,7 @@ class DaapModel(BaseModel):
         browser.connect_to_signal('ItemNew', self._new_service)
         browser.connect_to_signal('ItemRemove', self._remove_service)
         #### end of avahi discovery stuff ###
+
         self._servers = {}
 
     def _new_service(self, interface, protocol, name, type, domain, flags):
@@ -61,7 +65,7 @@ class DaapModel(BaseModel):
             interface, protocol, name, type, domain, 
             avahi.PROTO_UNSPEC, dbus.UInt32(0)
         )
-        print "Found service '%s' of type '%s' in domain '%s' at address '%s:%s'" % (name, type, domain, address, port)
+        self._log.info("Found service '%s' of type '%s' in domain '%s' at address '%s:%s'",name, type, domain, address, port)
         self.add_server(address)
         gobject.idle_add(self.emit, "add_tracks")
 
@@ -72,7 +76,13 @@ class DaapModel(BaseModel):
         sd = self.DaapData()
         nc = DAAPClient()
 
-        nc.connect(ip, port)
+        try:
+            self._log.debug("Trying to connect to %s", ip)
+            nc.connect(ip, port)
+        except:
+            self._log.warn("Could not connect to %s:%s", ip, port)
+            return
+
         sd.session = nc.login()
 
         try:
@@ -94,5 +104,5 @@ class DaapModel(BaseModel):
     
 if __name__=="__main__":
     import gobject
-    md = MusicData()
+    md = DappModel()
     gobject.MainLoop().run()
