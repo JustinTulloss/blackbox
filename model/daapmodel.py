@@ -14,6 +14,8 @@ import gobject
 import dbus
 import avahi
 import dbus.glib
+import threading
+gobject.threads_init()
 
 class DaapModel(BaseModel):
 
@@ -66,21 +68,29 @@ class DaapModel(BaseModel):
             avahi.PROTO_UNSPEC, dbus.UInt32(0)
         )
         self._log.info("Found service '%s' of type '%s' in domain '%s' at address '%s:%s'",name, type, domain, address, port)
-        self.add_server(address)
-        gobject.idle_add(self.emit, "add_tracks")
+        self.add_server(address, port)
 
     def _remove_service(self, interface, protocol, name, type, domain):
         pass
 
     def add_server(self, ip, port=3689):
+        newadd = threading.Thread(None, self._add_thread, args=(ip,port))
+        newadd.start()
+
+    def remove_server(self, ip):
+        bad = self._servers.pop(ip)
+        bad.session.logout()
+		#TODO:remove from the tracks listing
+
+    def _add_thread(self, ip, port):
         sd = self.DaapData()
         nc = DAAPClient()
 
         try:
-            self._log.debug("Trying to connect to %s", ip)
+            self._log.debug("Trying to connect to %s : %s", ip, port)
             nc.connect(ip, port)
-        except:
-            self._log.warn("Could not connect to %s:%s", ip, port)
+        except Exception, e:
+            self._log.exception("Could not connect to %s:%s - %s", ip, port, e)
             return
 
         sd.session = nc.login()
@@ -96,13 +106,9 @@ class DaapModel(BaseModel):
                 self._tracks.extend(db.tracks())
 
         self._servers[ip]=sd
-
-    def remove_server(self, ip):
-        bad = self._servers.pop(ip)
-        bad.session.logout()
-		#TODO:remove from the tracks listing
+        gobject.idle_add(self.emit, "add_tracks")
     
 if __name__=="__main__":
     import gobject
-    md = DappModel()
+    md = DaapModel()
     gobject.MainLoop().run()
