@@ -42,7 +42,7 @@ class play_queue(gtk.EventBox):
 		self.queue_store = gtk.ListStore(gobject.TYPE_PYOBJECT)
 		self.queue_view = gtk.TreeView(self.queue_store)
 		self.queue_view.set_headers_visible(False)
-		self.queue_view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
+		#self.queue_view.set_grid_lines(gtk.TREE_VIEW_GRID_LINES_NONE)
 
 		renderer = QueueRenderer()
 		column = gtk.TreeViewColumn("Play Queue", renderer, text=0)
@@ -52,7 +52,7 @@ class play_queue(gtk.EventBox):
 		self._vbox.pack_end(self.queue_view, False, True)
 
 		self.add(self._vbox)
-		self.set_size_request(175,600)
+		#self.set_size_request(175,600)
 
 		self.song_list = []
 

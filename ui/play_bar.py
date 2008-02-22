@@ -72,7 +72,7 @@ class PlayDetails(gtk.DrawingArea):
 		self.connect("expose_event", self.expose)
 
 		#decompose bg color into cairo values (floats between 0 and 1)
-		self.set_size_request(700, 100)
+		#self.set_size_request(700, 100)
 	
 	def set_song(self, song):
 		if song != None:

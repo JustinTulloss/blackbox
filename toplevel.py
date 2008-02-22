@@ -131,8 +131,9 @@ def main():
 	main_list.connect("play_song", iplay_bar.play_song)
 
 	#Display window
-	main_win.fullscreen()
+	#main_win.fullscreen()
 	main_win.set_decorated(0)
+	main_win.resize(800, 600)
 	main_win.show_all()
 	main_list.grab_focus()
 
