@@ -44,6 +44,7 @@ iplay_bar = play_bar.play_bar()
 iplay_controls = play_controls.play_controls()
 
 def destroy(src, data=None):
+	song_list.destroy()
 	gtk.main_quit()
 
 #Send a destroy event if the q button was pressed

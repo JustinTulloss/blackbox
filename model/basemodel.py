@@ -26,6 +26,9 @@ class BaseModel(gobject.GObject):
 		"""Make a new music data provider."""
 		super(BaseModel, self).__init__()
 
+	def destroy(self):
+		pass
+
 	def query(self, filters={}):
 		"""	Finds a list of songs that match the
 		arbitrary number of filters passed in"""

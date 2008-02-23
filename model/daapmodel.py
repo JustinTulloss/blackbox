@@ -61,6 +61,11 @@ class DaapModel(BaseModel):
         #### end of avahi discovery stuff ###
 
         self._servers = {}
+        self._threads = []
+
+    def destroy(self):
+        for thread in self._threads:
+            thread.join(timeout=1)
 
     def _new_service(self, interface, protocol, name, type, domain, flags):
         interface, protocol, name, type, domain, host, aprotocol, address, port, txt, flags = self._server.ResolveService(
@@ -75,6 +80,7 @@ class DaapModel(BaseModel):
 
     def add_server(self, ip, port=3689):
         newadd = threading.Thread(None, self._add_thread, args=(ip,port))
+        self._threads.append(newadd)
         newadd.start()
 
     def remove_server(self, ip):
