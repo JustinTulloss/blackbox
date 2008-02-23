@@ -41,7 +41,7 @@ class bread_crumb(gtk.EventBox):
 	def expose(self, widget, event):
 		cr = widget.window.cairo_create()
 
-		cr.rectangle(event.area)
+		cr.rectangle(*event.area)
 		cr.clip()
 
 		self.draw(cr)
