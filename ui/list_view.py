@@ -153,13 +153,13 @@ class list_view(gtk.VBox):
 		val = store.get_value(iter, 0)
 
 		if(view == self.artist_view):
-			songs = self.song_data.query(dict(artist=val))
+			songs = self.song_data.query({'artist':val})
 			self.play_queue.enqueue(songs)
 		elif(view == self.album_view):
-			songs = self.song_data.query(dict(album=val))
+			songs = self.song_data.query({'album':val})
 			self.play_queue.enqueue(songs)
 		elif(view == self.song_view):
-			songs = self.song_data.query(dict(name=val))
+			songs = self.song_data.query({'name':val})
 			self.play_queue.enqueue(songs)
 	
 	def _update_view(self, data):

@@ -40,9 +40,11 @@ class play_bar(gtk.HBox):
 		print "Playing song now..."
 		self._details.song = song
 		
-		self.pipeline.set_state(gst.STATE_NULL)
-		
 		songurl = song.request_url()
+		state = self.pipeline.get_state()
+		if state >= gst.STATE_PAUSED:
+			self.pipeline.set_state(gst.STATE_READY)
+
 		self.pipeline.set_property('uri', songurl)
 		self.pipeline.set_state(gst.STATE_PLAYING)
 
@@ -100,7 +102,7 @@ class PlayDetails(gtk.DrawingArea):
 	
 	def draw(self, cr, draw_bg=True):
 		self.draw_background(cr, draw_bg)
-		self.draw_progressbar(cr)
+		#self.draw_progressbar(cr)
 		self.draw_text(cr)
 	
 	def draw_background(self, cr, draw_bg=True):
@@ -158,7 +160,7 @@ class PlayDetails(gtk.DrawingArea):
 		else:
 			title = "Rubicon Music Player"
 
-		cr.set_font_size(self._dispdim[1]/3)
+		cr.set_font_size(self._dispdim[1]/2)
 		cr.select_font_face("Comic Sans MS", cairo.FONT_SLANT_NORMAL, 
 			cairo.FONT_WEIGHT_NORMAL)
 		x_bear, y_bear, width, theight, x_adv, y_adv = \
@@ -179,7 +181,7 @@ class PlayDetails(gtk.DrawingArea):
 		else:
 			infostring = "The free, legal, user friendly music swapping software"
 
-		cr.set_font_size(self._dispdim[1]/5)
+		cr.set_font_size(self._dispdim[1]/3)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL,
 			cairo.FONT_WEIGHT_NORMAL)
 		x_bear, y_bear, width, oheight, x_adv, y_adv = \

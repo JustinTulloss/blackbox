@@ -52,7 +52,7 @@ class play_queue(gtk.EventBox):
 		self._vbox.pack_end(self.queue_view, False, True)
 
 		self.add(self._vbox)
-		#self.set_size_request(175,600)
+		self.set_size_request(150,400)
 
 		self.song_list = []
 
@@ -153,12 +153,14 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		
 		#title
 		theight=aheight=lheight=0
-		cr.set_font_size(.2)
+		cr.set_font_size(.8)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		tasc, tdesc, theight, tmax_x, tmax_y = cr.font_extents()
 		cr.move_to(.1, theight+.1)
 		cr.show_text(self._text.name)
 		cr.stroke()
+
+		"""
 		cr.set_font_size(.15)
 		cr.select_font_face("Georgia", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		#artist
@@ -175,11 +177,12 @@ class QueueRenderer(gtk.GenericCellRenderer):
 			cr.show_text(self._text.album)
 			cr.stroke()
 
+		"""
 		cr.restore()
 
 	
 	def on_get_size(self, widget, cell_area):
-		return (0,0, 175,75)
+		return (0,0, 150,10)
 		
 def test():
 	main_win = gtk.Window()

@@ -76,7 +76,11 @@ class DaapModel(BaseModel):
         self.add_server(address, port)
 
     def _remove_service(self, interface, protocol, name, type, domain):
-        pass
+        interface, protocol, name, type, domain, host, aprotocol, address, port, txt, flags = self._server.ResolveService(
+            interface, protocol, name, type, domain, 
+            avahi.PROTO_UNSPEC, dbus.UInt32(0)
+        )
+        self.remove_server(address, port)
 
     def add_server(self, ip, port=3689):
         newadd = threading.Thread(None, self._add_thread, args=(ip,port))
