@@ -7,11 +7,13 @@
 
 import gtk
 gtk.gdk.threads_init()
+import time
 import gobject
 import cwiid
 import math
 import struct
 import threading
+import logging
 
 #thresholds for emitting events
 X_THRESHOLD = .9
@@ -45,6 +47,8 @@ class gtkWiimote(gtk.Widget):
 						gobject.TYPE_NONE, ()),
 					nav_back=(gobject.SIGNAL_RUN_FIRST,
 						gobject.TYPE_NONE, ()),
+					disconnect=(gobject.SIGNAL_RUN_FIRST,
+						gobject.TYPE_NONE, ()),
 				)
 	_mote = None
 	_actions = {}
@@ -68,13 +72,30 @@ class gtkWiimote(gtk.Widget):
 		#initialize different callbacks
 		self._actions[cwiid.MESG_BTN] = self.btn_cllbck
 		self._actions[cwiid.MESG_ACC] = self.acc_cllbck
+		self._actions[cwiid.MESG_ERROR] = self.err_cllbck
+
+		# Initialize scrolling stuff
+		"""
+		self._velocity = 0;
+		self.scroll = True
+		self._scroll_thread = threading.Thread(None, self._scroller)
+		self._scroll_thread.start()
 	
 
+
+	def _scroller(self):
+		while(self.scroll):
+			gobject.idle_add(self.emit, "scroll", 1*self._velocity, 0)
+			time.sleep(.05)
+
+	"""
+	def __del__(self):
+		self._mote.close()
+		
 	def cwiidCallback(self, mesgs):
 		#Loop through each message
 		for msg in mesgs:
-			if self._actions.has_key(msg[0]):
-				self._actions[msg[0]](msg[1])
+			self._actions.get(msg[0])(msg[1])
 	
 	def acc_cllbck(self, accs):
 		(xi, yi, zi) = accs
@@ -83,11 +104,13 @@ class gtkWiimote(gtk.Widget):
 		y = float(yi)
 		z = float(zi)		
 
-		#Weight the accelerations according to calibration data and
-		#center around 0
+		# Weight the accelerations according to calibration data and
+		# center around 0
 		a_x = (x - self._accel_calib[0])/(self._accel_calib[4]-self._accel_calib[0])
 		a_y = (y - self._accel_calib[1])/(self._accel_calib[5]-self._accel_calib[1])
 		a_z = (z - self._accel_calib[2])/(self._accel_calib[6]-self._accel_calib[2])
+
+		#self._velocity = a_y*3 + self._velocity
 
 		b_on = self._btnmask & cwiid.BTN_B
 
@@ -104,6 +127,7 @@ class gtkWiimote(gtk.Widget):
 
 			self._xabove = True
 			gobject.idle_add(self.emit, "enqueue")
+			self.rumble(.1)
 
 		if (a_x<X_THRESHOLD and self._xabove == True):
 			self._xabove = False
@@ -115,13 +139,15 @@ class gtkWiimote(gtk.Widget):
 		
 		if pitch>PITCH_THRESHOLD and self._no_scroll == False and not b_on:
 			self._no_scroll=True;
-			t = threading.Timer(.4-.2*pitch, self.scroll_again)
+			wait = .4-.4*pitch
+			t = threading.Timer(wait, self.scroll_again)
 			t.start()
 			gobject.idle_add(self.emit, "scroll", 1, 0)
 
 		if pitch<-PITCH_THRESHOLD and self._no_scroll == False and not b_on:
 			self._no_scroll=True;
-			t = threading.Timer(.1-.1*pitch, self.scroll_again)
+			wait = -(-.4-.4*pitch)
+			t = threading.Timer(wait, self.scroll_again)
 			t.start()
 			gobject.idle_add(self.emit, "scroll", -1, 0)
 	
@@ -129,10 +155,12 @@ class gtkWiimote(gtk.Widget):
 		self._no_scroll = False
 			
 
-	def btn_cllbck(self, btns):
-		#print type(btndict)	
-		#print dir(btndict)
+	def err_cllbck(self, error):
+		if error == cwiid.ERROR_DISCONNECT:
+			self._mote.close()
+			gobject.idle_add(self.emit, "disconnect")
 
+	def btn_cllbck(self, btns):
 		omask = self._btnmask
 		self._btnmask = btns
 
@@ -160,7 +188,21 @@ class gtkWiimote(gtk.Widget):
 			gobject.idle_add(self.emit, "nav_back")
 		if(btns & cwiid.BTN_PLUS):
 			gobject.idle_add(self.emit, "nav_forward")
-		
+	
+	def set_leds(self,led_bitmask):
+		self._mote.led=led_bitmask
+
+	def rumble(self, seconds):
+		self._mote.rumble = True
+		time.sleep(seconds)
+		self._mote.rumble = False
+	
+	def get_battery(self):
+		self._mote.request_status()
+		return int(float(self._mote.state['battery'])/ \
+			float(cwiid.BATTERY_MAX) * 100)
+
+	battery = property(get_battery, None)
 
 if __name__ == "__main__":
 

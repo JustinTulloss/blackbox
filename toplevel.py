@@ -5,6 +5,7 @@ from ui import play_bar
 from ui import play_controls
 from ui import song_info
 import sys #used for command line
+import signal
 import getopt
 
 PLAYING = 0
@@ -42,6 +43,8 @@ main_list = list_view.list_view(song_list)
 iplay_queue = play_queue.play_queue()
 iplay_bar = play_bar.play_bar()
 iplay_controls = play_controls.play_controls()
+if use_wii == True:
+	wii = gtkwiid.gtkWiimote()
 
 def destroy(src, data=None):
 	song_list.destroy()
@@ -78,11 +81,17 @@ def playfunction(src):
 		iplay_bar.pause_song()
 		playmode= PAUSED
 
+def battery_updater(signum, stack):
+	iplay_bar.update_battery(wii.battery)
+	signal.alarm(60)
+
 def main():
 	main_win = gtk.Window()
 
 	if use_wii == True:
-		wii = gtkwiid.gtkWiimote()
+		wii.set_leds(0x09)
+
+		wii.connect("disconnect", destroy)
 
 		wii.connect("selected", main_list.make_selection)
 		wii.connect("nav_forward", main_list.move_forward)
@@ -100,6 +109,7 @@ def main():
 		#We need to replace this with logic that works
 		wii.connect("play_released", playfunction) 
 		wii.connect("song_forward_released", iplay_queue.dequeue)
+
 	
 	#Allow us to quit by pressing 'q'
 	main_win.connect("destroy", destroy)
@@ -125,6 +135,7 @@ def main():
 
 	main_table.attach(iplay_controls, 0,1,1,2, gtk.FILL, gtk.FILL)
 
+
 	#Connect components
 	main_list.play_queue = iplay_queue
 	iplay_bar.connect("song_ended", iplay_queue.dequeue)
@@ -137,6 +148,11 @@ def main():
 	main_win.resize(800, 600)
 	main_win.show_all()
 	main_list.grab_focus()
+
+	if use_wii == True:
+		#Set up alarm to update battery status
+		signal.signal(signal.SIGALRM, battery_updater)
+		battery_updater(None, None)
 
 	gtk.main()
 

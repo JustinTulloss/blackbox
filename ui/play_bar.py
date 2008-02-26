@@ -31,7 +31,7 @@ class play_bar(gtk.HBox):
 		bus.connect('message', self.gst_message)
 
 	def __del__(self):
-		self.player.set_state(gst.STATE_NULL)
+		self.pipeline.set_state(gst.STATE_NULL)
 		
 	def new_decode_pad(dbin, pad, islast):
 		pad.link(self.convert.get_pad("sink"))
@@ -49,16 +49,19 @@ class play_bar(gtk.HBox):
 		self.pipeline.set_state(gst.STATE_PLAYING)
 
 	def pause_song(self):
-		self.player.set_state(gst.STATE_PAUSED)
-		print "%s paused" % self._details.song.title
+		self.pipeline.set_state(gst.STATE_PAUSED)
+		#print "%s paused" % self._details.song.title
 	
 	def resume_song(self):
-		self.player.set_state(gst.STATE_PLAYING)
-		print "%s resumed" % self._details.song.title
+		self.pipeline.set_state(gst.STATE_PLAYING)
+		#print "%s resumed" % self._details.song.title
 
 	def change_song(self, song):
 		songurl = song.request_url()
 		self.pipeline.set_property('uri', songurl)
+
+	def update_battery(self, percentage):
+		self._details.battery = percentage
 
 	def gst_message(self, bus, message):
 		t = message.type
@@ -76,10 +79,18 @@ class PlayDetails(gtk.DrawingArea):
 		super(PlayDetails, self).__init__()
 		#connect events
 		self.connect("expose_event", self.expose)
+		self._battery = 100
 
 		#decompose bg color into cairo values (floats between 0 and 1)
 		#self.set_size_request(700, 100)
 	
+	def set_battery(self, percentage):
+		self._battery = percentage
+		cr = self.window.cairo_create()
+		self.draw(cr, False)
+
+	battery = property(None, set_battery)
+
 	def set_song(self, song):
 		if song != None:
 			self._song = song
@@ -108,6 +119,7 @@ class PlayDetails(gtk.DrawingArea):
 		self.draw_background(cr, draw_bg)
 		#self.draw_progressbar(cr)
 		self.draw_text(cr)
+		self.draw_battery(cr)
 	
 	def draw_background(self, cr, draw_bg=True):
 		rect = self.get_allocation()
@@ -192,6 +204,22 @@ class PlayDetails(gtk.DrawingArea):
 			cr.text_extents(infostring)
 		cr.move_to(self._dispdim[0]/2 - width/2, theight+oheight+self._dispdim[1]*.1)
 		cr.show_text(infostring)
+		cr.stroke()
+		cr.restore()
+
+	def draw_battery(self, cr):
+		batstring = "Battery: %s%%" % self._battery
+		rect = self.get_allocation()
+		cr.save()
+		#cr.scale(rect.width, rect.height)
+		cr.set_font_size(self._dispdim[1]/3)
+		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL,
+			cairo.FONT_WEIGHT_NORMAL)
+		x_bear, y_bear, width, height, x_adv, y_adv = \
+			cr.text_extents(batstring)
+		cr.set_source_rgb(0xFF,0xFF,0xFF)
+		cr.move_to(rect.width-width-5, rect.height-5)
+		cr.show_text(batstring)
 		cr.stroke()
 		cr.restore()
 
