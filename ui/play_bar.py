@@ -64,6 +64,10 @@ class play_bar(gtk.HBox):
 		t = message.type
 		if t == gst.MESSAGE_EOS:
 			gobject.idle_add(self.emit, "song_ended")
+		elif t == gst.MESSAGE_ERROR:
+			self.pipeline.set_state(gst.STATE_NULL)
+			err, debug = message.parse_error()
+			print "Error: %s", err, debug
 
 class PlayDetails(gtk.DrawingArea):
 	_song = {}
