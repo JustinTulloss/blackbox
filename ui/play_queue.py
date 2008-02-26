@@ -156,7 +156,7 @@ class QueueRenderer(gtk.GenericCellRenderer):
 		cr.set_font_size(.8)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 		tasc, tdesc, theight, tmax_x, tmax_y = cr.font_extents()
-		cr.move_to(.1, theight+.1)
+		cr.move_to(.1, theight)
 		cr.show_text(self._text.name)
 		cr.stroke()
 
@@ -182,7 +182,7 @@ class QueueRenderer(gtk.GenericCellRenderer):
 
 	
 	def on_get_size(self, widget, cell_area):
-		return (0,0, 150,10)
+		return (0,0, 150,15)
 		
 def test():
 	main_win = gtk.Window()
