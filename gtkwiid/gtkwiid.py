@@ -43,6 +43,14 @@ class gtkWiimote(gtk.Widget):
 						gobject.TYPE_NONE, ()),
 					song_back_released=(gobject.SIGNAL_RUN_FIRST,
 						gobject.TYPE_NONE, ()),
+					one_pressed=(gobject.SIGNAL_RUN_FIRST,
+						gobject.TYPE_NONE, ()),
+					one_released=(gobject.SIGNAL_RUN_FIRST,
+						gobject.TYPE_NONE, ()),
+					two_pressed=(gobject.SIGNAL_RUN_FIRST,
+						gobject.TYPE_NONE, ()),
+					two_released=(gobject.SIGNAL_RUN_FIRST,
+						gobject.TYPE_NONE, ()),
 					nav_forward=(gobject.SIGNAL_RUN_FIRST,
 						gobject.TYPE_NONE, ()),
 					nav_back=(gobject.SIGNAL_RUN_FIRST,
@@ -188,6 +196,17 @@ class gtkWiimote(gtk.Widget):
 			gobject.idle_add(self.emit, "nav_back")
 		if(btns & cwiid.BTN_PLUS):
 			gobject.idle_add(self.emit, "nav_forward")
+
+		if(btns & cwiid.BTN_1):
+			gobject.idle_add(self.emit, "one_pressed")
+		elif(omask & cwiid.BTN_1):
+			gobject.idle_add(self.emit, "one_released")
+
+		if(btns & cwiid.BTN_2):
+			gobject.idle_add(self.emit, "two_pressed")
+		elif(omask & cwiid.BTN_2):
+			gobject.idle_add(self.emit, "two_released")
+
 	
 	def set_leds(self,led_bitmask):
 		self._mote.led=led_bitmask

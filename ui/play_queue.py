@@ -3,6 +3,8 @@ import gobject
 import cairo
 from cairo_help import *
 import pango
+from random import randint, seed
+seed()
 
 GRADIENT_COLOR = 0
 
@@ -54,6 +56,7 @@ class play_queue(gtk.EventBox):
 		self.add(self._vbox)
 		self.set_size_request(150,400)
 
+		self.shuffle = False
 		self.song_list = []
 
 	def enqueue(self, songs):
@@ -68,20 +71,39 @@ class play_queue(gtk.EventBox):
 			
 			self.song_list.append(song)
 
+	def dequeue_first(self, widget=None):
+		store = self.queue_store
+		first = store.iter_nth_child(None, 0)
+		if first == None:
+			return None
+		store.remove(first)
+		self.song_list.pop()
+
 	def dequeue(self, widget=None):
 		if(len(self.song_list) < 1):
 			return
 
 		store = self.queue_store
+		if self.shuffle:
+			next = randint(0, len(self.song_list)-1)
+		else:
+			next = 0
+
 		ilast = store.iter_n_children(None)
-		last = store.iter_nth_child(None, ilast-1)
+		last = store.iter_nth_child(None, ilast-next-1)
 		
 		if(last==None):
 			return None
 
 		store.remove(last)
+		self.emit("play_song", self.song_list.pop(next))
+	
+	def clear_queue(self):
+		if (len(self.song_list)<1):
+			return
 
-		self.emit("play_song", self.song_list.pop(0))
+		self.queue_store.clear()
+		self.song_list = []
 	
 ######################event handlers################
 	def expose(self, widget, event):

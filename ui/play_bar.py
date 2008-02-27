@@ -212,7 +212,7 @@ class PlayDetails(gtk.DrawingArea):
 		rect = self.get_allocation()
 		cr.save()
 		#cr.scale(rect.width, rect.height)
-		cr.set_font_size(self._dispdim[1]/3)
+		cr.set_font_size(self._dispdim[1]/2)
 		cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL,
 			cairo.FONT_WEIGHT_NORMAL)
 		x_bear, y_bear, width, height, x_adv, y_adv = \

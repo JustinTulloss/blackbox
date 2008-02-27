@@ -6,6 +6,8 @@ from ui import play_controls
 from ui import song_info
 import sys #used for command line
 import signal
+import time
+import threading
 import getopt
 
 PLAYING = 0
@@ -13,6 +15,7 @@ PAUSED = 1
 STOPPED = 2
 
 playmode = STOPPED
+one_down = threading.Lock()
 
 #if(len(sys.argv)>1):
 #	song_list = song_info.get_song_list(sys.argv[1])
@@ -85,6 +88,32 @@ def battery_updater(signum, stack):
 	iplay_bar.update_battery(wii.battery)
 	signal.alarm(60)
 
+def one_press_handler(widget):
+	global one_timer
+	global one_down
+	one_timer.cancel()
+
+	one_down.acquire()
+	iplay_queue.dequeue_first()
+	try:
+		one_timer.start()
+	except:
+		pass # a minor race, who cares?
+
+def check_one_down():
+	global one_down
+	if one_down.locked():
+		iplay_queue.clear_queue()
+
+one_timer = threading.Timer(1, check_one_down)
+
+def one_release_handler(widget):
+	global one_down
+	one_down.release()
+
+def toggle_shuffle(widget):
+	iplay_queue.shuffle = not iplay_queue.shuffle
+
 def main():
 	main_win = gtk.Window()
 
@@ -105,6 +134,9 @@ def main():
 		wii.connect("song_forward_released", iplay_controls.forward_released)
 		wii.connect("song_back_pressed", iplay_controls.back_pressed)
 		wii.connect("song_back_released", iplay_controls.back_released)
+		wii.connect("one_pressed", one_press_handler)
+		wii.connect("one_released", one_release_handler)
+		wii.connect("two_pressed", toggle_shuffle)
 	
 		#We need to replace this with logic that works
 		wii.connect("play_released", playfunction) 
