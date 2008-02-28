@@ -120,7 +120,7 @@ def main():
 	if use_wii == True:
 		wii.set_leds(0x09)
 
-		wii.connect("disconnect", destroy)
+		#wii.connect("disconnect", destroy)
 
 		wii.connect("selected", main_list.make_selection)
 		wii.connect("nav_forward", main_list.move_forward)

@@ -84,6 +84,7 @@ class DaapModel(BaseModel):
 
     def add_server(self, ip, port=3689):
         newadd = threading.Thread(None, self._add_thread, args=(ip,port))
+        newadd.setDaemon(True)
         self._threads.append(newadd)
         newadd.start()
 

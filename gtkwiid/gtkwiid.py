@@ -13,7 +13,6 @@ import cwiid
 import math
 import struct
 import threading
-import logging
 
 #thresholds for emitting events
 X_THRESHOLD = .9
@@ -63,9 +62,10 @@ class gtkWiimote(gtk.Widget):
 
 	def __init__(self):
 		super(gtkWiimote, self).__init__()
-		self._mote = cwiid.Wiimote(flags=cwiid.FLAG_MESG_IFC)
-		self._mote.rpt_mode = cwiid.RPT_BTN|cwiid.RPT_ACC
-		self._mote.mesg_callback = self.cwiidCallback
+		self.scan = True
+		self._connect_thread = threading.Thread(None, self._scan_for_mote)
+		self._connect_thread.setDaemon(True)
+		self._connect_thread.start()
 
 		#state machine variables
 		self._xabove = False
@@ -73,9 +73,6 @@ class gtkWiimote(gtk.Widget):
 
 		self._btnmask = 0
 
-		#read in accelerometer calibration
-		accel_buf = self._mote.read(cwiid.RW_EEPROM, 0x16, 7)
-		self._accel_calib = struct.unpack("BBBBBBB", accel_buf)
 		
 		#initialize different callbacks
 		self._actions[cwiid.MESG_BTN] = self.btn_cllbck
@@ -98,7 +95,26 @@ class gtkWiimote(gtk.Widget):
 
 	"""
 	def __del__(self):
+		if self._connect_thread.isAlive():
+			self.scan = False
+			self._connect_thread.join(0)
 		self._mote.close()
+	
+	def _scan_for_mote(self):
+		print "Scanning for wiimote"
+		while self._mote == None and self.scan == True:
+			try: 
+				self._mote = cwiid.Wiimote(flags=cwiid.FLAG_MESG_IFC)
+				self._mote.rpt_mode = cwiid.RPT_BTN|cwiid.RPT_ACC
+				self._mote.mesg_callback = self.cwiidCallback
+
+				#read in accelerometer calibration
+				accel_buf = self._mote.read(cwiid.RW_EEPROM, 0x16, 7)
+				self._accel_calib = struct.unpack("BBBBBBB", accel_buf)
+
+				self._mote.led = self._led_bitmask
+			except:
+				time.sleep(5)
 		
 	def cwiidCallback(self, mesgs):
 		#Loop through each message
@@ -166,6 +182,8 @@ class gtkWiimote(gtk.Widget):
 	def err_cllbck(self, error):
 		if error == cwiid.ERROR_DISCONNECT:
 			self._mote.close()
+			self._mote = None
+			self._connect_thread.run()
 			gobject.idle_add(self.emit, "disconnect")
 
 	def btn_cllbck(self, btns):
@@ -209,17 +227,23 @@ class gtkWiimote(gtk.Widget):
 
 	
 	def set_leds(self,led_bitmask):
-		self._mote.led=led_bitmask
+		self._led_bitmask = led_bitmask
+		if self._mote != None:
+			self._mote.led=led_bitmask
 
 	def rumble(self, seconds):
-		self._mote.rumble = True
-		time.sleep(seconds)
-		self._mote.rumble = False
+		if self._mote != None:
+			self._mote.rumble = True
+			time.sleep(seconds)
+			self._mote.rumble = False
 	
 	def get_battery(self):
-		self._mote.request_status()
-		return int(float(self._mote.state['battery'])/ \
-			float(cwiid.BATTERY_MAX) * 100)
+		if self._mote != None:
+			self._mote.request_status()
+			return int(float(self._mote.state['battery'])/ \
+				float(cwiid.BATTERY_MAX) * 100)
+		else:
+			return -1
 
 	battery = property(get_battery, None)
 
