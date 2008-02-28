@@ -63,7 +63,11 @@ class DaapModel(BaseModel):
         self._servers = {}
         self._threads = []
 
-    def destroy(self):
+    def __del__(self):
+        for server in self._servers:
+            self._log.debug("Logging out of %s", server.hostname)
+            server.session.logout()
+
         for thread in self._threads:
             thread.join(timeout=1)
 
@@ -90,7 +94,6 @@ class DaapModel(BaseModel):
 
     def remove_server(self, ip):
         bad = self._servers.pop(ip)
-        bad.session.logout()
 		#TODO:remove from the tracks listing
 
     def _add_thread(self, ip, port):
