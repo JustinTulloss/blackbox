@@ -29,16 +29,23 @@ class BaseModel(gobject.GObject):
 	def destroy(self):
 		pass
 
-	def query(self, filters={}):
+	def query(self, filters={}, duplicates=False):
 		"""	Finds a list of songs that match the
-		arbitrary number of filters passed in"""
+		arbitrary number of filters passed in. If duplicates
+		False then it will not return duplicate songs."""
+
+		added_tracks = set()
+
 		def ffunc(track):
 			"""Filter function goes through each filter condition and
 			sees if the DAAPTrack matches"""
-			match = True
+			normalized_name = track.name.lower()
 			for key in filters.keys():
+				if not duplicates and normalized_name in added_tracks:
+					return False
 				if not getattr(track, key) == filters[key]:
 					return False
+			added_tracks.add(normalized_name)
 			return True
 
 		return filter(ffunc, self._tracks)

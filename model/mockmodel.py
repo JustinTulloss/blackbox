@@ -25,8 +25,11 @@ class MockModel(BaseModel):
 							album="IV",
 							name="Black Dog"),
 					MockData(artist="Led Zeppelin",
-							album="II",
+							album="IV",
 							name="Black Dog"),
+					MockData(artist="Led Zeppelin",
+							album="II",
+							name="Whole Lotta Love"),
 					MockData(artist="Andrew Bird",
 							album="The Mysterious Production of Eggs",
 							name="MX Missiles")]
